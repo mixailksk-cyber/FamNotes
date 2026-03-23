@@ -74,11 +74,18 @@ const NoteActionDialog = ({
           )}
           
           {isInTrash ? (
-            <TouchableOpacity 
-              onPress={() => { onPermanentDelete(); onClose(); }} 
-              style={{ marginTop: 16, padding: 12, backgroundColor: '#FF4444', borderRadius: 5, alignItems: 'center' }}>
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Удалить навсегда</Text>
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity 
+                onPress={() => { onMove('Главная'); onClose(); }} 
+                style={{ marginTop: 16, padding: 12, backgroundColor: '#4CAF50', borderRadius: 5, alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Восстановить</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => { onPermanentDelete(); onClose(); }} 
+                style={{ marginTop: 8, padding: 12, backgroundColor: '#FF4444', borderRadius: 5, alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Удалить навсегда</Text>
+              </TouchableOpacity>
+            </>
           ) : (
             <TouchableOpacity 
               onPress={() => { onDelete(); onClose(); }} 
