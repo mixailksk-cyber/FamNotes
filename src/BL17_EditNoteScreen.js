@@ -35,7 +35,6 @@ const EditNoteScreen = ({
   const isInTrash = note.folder === 'Корзина' || note.deleted === true;
   const isLocked = note.locked === true;
 
-  // Фокус на content при монтировании
   useEffect(() => {
     if (contentInputRef.current && !isLocked) {
       setTimeout(() => {
@@ -98,7 +97,6 @@ const EditNoteScreen = ({
   };
 
   const handleBack = () => {
-    // Проверяем, есть ли изменения
     const hasChanges = () => {
       if (!selectedNote) return note.title !== '' || note.content !== '';
       return selectedNote.title !== note.title || selectedNote.content !== note.content || selectedNote.color !== note.color;
@@ -154,26 +152,22 @@ const EditNoteScreen = ({
         showSearch={false} 
         brandColor={note.color || brandColor}
       >
-        {/* Кнопка закрепления */}
         {!isInTrash && (
           <TouchableOpacity onPress={handleTogglePin}>
             <Icon name="push-pin" size={24} color={note.pinned ? "white" : "rgba(255,255,255,0.7)"} />
           </TouchableOpacity>
         )}
         
-        {/* Кнопка блокировки */}
         {!isInTrash && (
           <TouchableOpacity onPress={handleToggleLock}>
             <Icon name={note.locked ? "lock" : "lock-open"} size={24} color="white" />
           </TouchableOpacity>
         )}
         
-        {/* Кнопка поделиться */}
         <TouchableOpacity onPress={handleShare}>
           <Icon name="share" size={24} color="white" />
         </TouchableOpacity>
         
-        {/* Кнопка удалить */}
         <TouchableOpacity onPress={handleDelete}>
           <Icon name="delete" size={24} color="white" />
         </TouchableOpacity>
