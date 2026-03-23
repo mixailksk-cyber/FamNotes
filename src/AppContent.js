@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, StatusBar, BackHandler } from 'react-native';
-import { useSafeAreaInsets } from './imports';
 import { BRAND_COLOR, getBrandColor } from './constants';
 import { useNotesData } from './hooks/useNotesData';
 import { useMemoizedCalculations } from './hooks/useMemoizedCalculations';
@@ -14,7 +13,6 @@ import SearchScreen from './screens/SearchScreen';
 import NoteActionDialog from './components/NoteActionDialog';
 
 const AppContent = () => {
-  const insets = useSafeAreaInsets();
   const [currentScreen, setCurrentScreen] = useState('notes');
   const [navigationStack, setNavigationStack] = useState(['notes']);
   const [currentFolder, setCurrentFolder] = useState('Главная');
@@ -122,17 +120,17 @@ const AppContent = () => {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'notes':
-        return <NotesListScreen key={`notes-${restoreKey}`} currentFolder={currentFolder} sortedNotes={sortedNotes} handleNotePress={(note) => handleNotePress(note, 'notes')} setSelectedNoteForAction={setSelectedNoteForAction} setShowNoteDialog={setShowNoteDialog} setCurrentScreen={setCurrentScreen} setSelectedNote={setSelectedNote} goToSearch={goToSearch} insets={insets} settings={settings} onEmptyTrash={handleEmptyTrash} />;
+        return <NotesListScreen key={`notes-${restoreKey}`} currentFolder={currentFolder} sortedNotes={sortedNotes} handleNotePress={(note) => handleNotePress(note, 'notes')} setSelectedNoteForAction={setSelectedNoteForAction} setShowNoteDialog={setShowNoteDialog} setCurrentScreen={setCurrentScreen} setSelectedNote={setSelectedNote} goToSearch={goToSearch} insets={{ bottom: 0, right: 0 }} settings={settings} onEmptyTrash={handleEmptyTrash} />;
       case 'edit':
-        return <EditNoteScreen selectedNote={selectedNote} currentFolder={currentFolder} notes={notes} settings={settings} navigationStack={navigationStack} onSave={handleSaveNote} setCurrentScreen={setCurrentScreen} setNavigationStack={setNavigationStack} setSearchQuery={setSearchQuery} insets={insets} searchQuery={searchQuery} setCurrentFolder={setCurrentFolder} />;
+        return <EditNoteScreen selectedNote={selectedNote} currentFolder={currentFolder} notes={notes} settings={settings} navigationStack={navigationStack} onSave={handleSaveNote} setCurrentScreen={setCurrentScreen} setNavigationStack={setNavigationStack} setSearchQuery={setSearchQuery} insets={{ bottom: 0, right: 0 }} searchQuery={searchQuery} setCurrentFolder={setCurrentFolder} />;
       case 'folders':
-        return <FoldersScreen folders={folders} currentFolder={currentFolder} setCurrentFolder={setCurrentFolder} setCurrentScreen={setCurrentScreen} goToSearch={goToSearch} insets={insets} showFolderDialog={showFolderDialog} setShowFolderDialog={setShowFolderDialog} saveFolders={saveFolders} showFolderSettings={showFolderSettings} setShowFolderSettings={setShowFolderSettings} selectedFolderForSettings={selectedFolderForSettings} setSelectedFolderForSettings={setSelectedFolderForSettings} selectedFolderColor={selectedFolderColor} setSelectedFolderColor={setSelectedFolderColor} handleRenameFolder={handleRenameFolder} handleColorChange={handleColorChange} handleDeleteFolder={handleDeleteFolder} settings={settings} notes={notes} />;
+        return <FoldersScreen folders={folders} currentFolder={currentFolder} setCurrentFolder={setCurrentFolder} setCurrentScreen={setCurrentScreen} goToSearch={goToSearch} insets={{ bottom: 0, right: 0 }} showFolderDialog={showFolderDialog} setShowFolderDialog={setShowFolderDialog} saveFolders={saveFolders} showFolderSettings={showFolderSettings} setShowFolderSettings={setShowFolderSettings} selectedFolderForSettings={selectedFolderForSettings} setSelectedFolderForSettings={setSelectedFolderForSettings} selectedFolderColor={selectedFolderColor} setSelectedFolderColor={setSelectedFolderColor} handleRenameFolder={handleRenameFolder} handleColorChange={handleColorChange} handleDeleteFolder={handleDeleteFolder} settings={settings} notes={notes} />;
       case 'settings':
         return <SettingsScreen setCurrentScreen={setCurrentScreen} goToSearch={goToSearch} settings={settings} saveSettings={saveSettings} notes={notes} folders={folders} onBrandColorChange={handleBrandColorChange} onDataRestored={handleDataRestored} />;
       case 'search':
         return <SearchScreen notes={notes} setCurrentScreen={setCurrentScreen} setSelectedNote={setSelectedNote} setSelectedNoteForAction={setSelectedNoteForAction} setShowNoteDialog={setShowNoteDialog} goBack={goBack} navigationStack={navigationStack} setNavigationStack={setNavigationStack} setSearchQuery={setSearchQuery} searchQuery={searchQuery} settings={settings} />;
       default:
-        return <NotesListScreen key={`notes-${restoreKey}`} currentFolder={currentFolder} sortedNotes={sortedNotes} handleNotePress={(note) => handleNotePress(note, 'notes')} setSelectedNoteForAction={setSelectedNoteForAction} setShowNoteDialog={setShowNoteDialog} setCurrentScreen={setCurrentScreen} setSelectedNote={setSelectedNote} goToSearch={goToSearch} insets={insets} settings={settings} onEmptyTrash={handleEmptyTrash} />;
+        return <NotesListScreen key={`notes-${restoreKey}`} currentFolder={currentFolder} sortedNotes={sortedNotes} handleNotePress={(note) => handleNotePress(note, 'notes')} setSelectedNoteForAction={setSelectedNoteForAction} setShowNoteDialog={setShowNoteDialog} setCurrentScreen={setCurrentScreen} setSelectedNote={setSelectedNote} goToSearch={goToSearch} insets={{ bottom: 0, right: 0 }} settings={settings} onEmptyTrash={handleEmptyTrash} />;
     }
   };
   

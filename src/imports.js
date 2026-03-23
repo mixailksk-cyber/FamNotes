@@ -18,7 +18,6 @@ import {
   RefreshControl
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export {
   React,
@@ -44,5 +43,4 @@ export {
   SafeAreaView,
   RefreshControl,
   Icon,
-  useSafeAreaInsets,
 };

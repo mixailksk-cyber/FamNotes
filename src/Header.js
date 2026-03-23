@@ -1,21 +1,21 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { Icon, useSafeAreaInsets } from './imports';
+import { View, Text, TouchableOpacity, StatusBar, Platform } from 'react-native';
+import { Icon } from './imports';
 import { BRAND_COLOR } from './constants';
 
 const Header = ({ title, rightIcon, onRightPress, showBack, onBack, showSearch, onSearchPress, showPalette, onPalettePress, children, brandColor }) => {
-  const insets = useSafeAreaInsets();
   const headerColor = brandColor || BRAND_COLOR;
+  const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight : 44;
   
   const childrenArray = React.Children.toArray(children);
   
   return (
     <View style={{ 
       backgroundColor: headerColor, 
-      paddingTop: insets.top + 16, 
+      paddingTop: statusBarHeight + 16, 
       paddingBottom: 16, 
-      paddingLeft: insets.left + 16, 
-      paddingRight: insets.right + 16, 
+      paddingLeft: 16, 
+      paddingRight: 16, 
       flexDirection: 'row', 
       justifyContent: 'space-between', 
       alignItems: 'center' 
