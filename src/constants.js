@@ -3,29 +3,13 @@ import { Dimensions } from 'react-native';
 export const BRAND_COLOR = '#20A0A0';
 
 export const NOTE_COLORS = [
-  '#20A0A0',
-  '#45B7D1',
-  '#96CEB4',
-  '#9B59B6',
-  '#3498DB',
-  '#E67E22',
-  '#2ECC71',
-  '#F1C40F',
-  '#E74C3C',
-  '#34495E'
+  '#20A0A0', '#45B7D1', '#96CEB4', '#9B59B6', '#3498DB',
+  '#E67E22', '#2ECC71', '#F1C40F', '#E74C3C', '#34495E'
 ];
 
 export const FOLDER_COLORS = [
-  BRAND_COLOR,
-  '#45B7D1',
-  '#96CEB4',
-  '#9B59B6',
-  '#3498DB',
-  '#E67E22',
-  '#2ECC71',
-  '#F1C40F',
-  '#E74C3C',
-  '#34495E'
+  '#20A0A0', '#45B7D1', '#96CEB4', '#9B59B6', '#3498DB',
+  '#E67E22', '#2ECC71', '#F1C40F', '#E74C3C', '#34495E'
 ];
 
 export const TITLE_MAX_LENGTH = 40;
