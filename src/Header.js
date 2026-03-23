@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StatusBar, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import { Icon } from './imports';
 import { BRAND_COLOR } from './constants';
 
 const Header = ({ title, rightIcon, onRightPress, showBack, onBack, showSearch, onSearchPress, showPalette, onPalettePress, children, brandColor }) => {
   const headerColor = brandColor || BRAND_COLOR;
-  const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight : 44;
+  const statusBarHeight = 44;
   
   const childrenArray = React.Children.toArray(children);
   

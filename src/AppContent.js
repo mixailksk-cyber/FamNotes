@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StatusBar, BackHandler } from 'react-native';
+import { View, BackHandler } from 'react-native';
 import { BRAND_COLOR, getBrandColor } from './constants';
 import { useNotesData } from './hooks/useNotesData';
 import { useMemoizedCalculations } from './hooks/useMemoizedCalculations';
@@ -134,12 +134,9 @@ const AppContent = () => {
     }
   };
   
-  const currentBrandColor = getBrandColor(settings);
-  
   return (
-    <>
-      <StatusBar backgroundColor={currentBrandColor} barStyle="light-content" />
-      <View style={{ flex: 1 }}>{renderScreen()}</View>
+    <View style={{ flex: 1 }}>
+      {renderScreen()}
       
       {selectedNoteForAction && (
         <NoteActionDialog 
@@ -167,7 +164,7 @@ const AppContent = () => {
           settings={settings} 
         />
       )}
-    </>
+    </View>
   );
 };
 
