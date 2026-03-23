@@ -1,0 +1,19 @@
+name: Reset to working commit
+
+on:
+  workflow_dispatch:
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          
+      - name: Reset to 5c9cc96
+        run: |
+          git reset --hard 5c9cc96
+          git push --force origin main
