@@ -49,59 +49,6 @@ const AppContent = () => {
           if (cameFromSearch) {
             setCurrentScreen('search');
             setSelectedNote(null);
-            setNavigationStack(prev => prev.slice(0, -1
-cat > src/AppContent.js << 'EOF'
-import React, { useState, useEffect } from 'react';
-import { View, StatusBar, BackHandler } from 'react-native';
-import { useSafeAreaInsets } from './imports';
-import { BRAND_COLOR, getBrandColor } from './constants';
-import { useNotesData } from './hooks/useNotesData';
-import { useMemoizedCalculations } from './hooks/useMemoizedCalculations';
-import { useFolderHandlers } from './hooks/useFolderHandlers';
-import { useSearchNavigation } from './hooks/useSearchNavigation';
-import NotesListScreen from './screens/NotesListScreen';
-import EditNoteScreen from './screens/EditNoteScreen';
-import FoldersScreen from './screens/FoldersScreen';
-import SettingsScreen from './screens/SettingsScreen';
-import SearchScreen from './screens/SearchScreen';
-import NoteActionDialog from './components/NoteActionDialog';
-
-const AppContent = () => {
-  const insets = useSafeAreaInsets();
-  const [currentScreen, setCurrentScreen] = useState('notes');
-  const [navigationStack, setNavigationStack] = useState(['notes']);
-  const [currentFolder, setCurrentFolder] = useState('Главная');
-  const [selectedNote, setSelectedNote] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showFolderDialog, setShowFolderDialog] = useState(false);
-  const [showFolderSettings, setShowFolderSettings] = useState(false);
-  const [selectedFolderForSettings, setSelectedFolderForSettings] = useState(null);
-  const [selectedFolderColor, setSelectedFolderColor] = useState(BRAND_COLOR);
-  const [showNoteDialog, setShowNoteDialog] = useState(false);
-  const [selectedNoteForAction, setSelectedNoteForAction] = useState(null);
-  const [restoreKey, setRestoreKey] = useState(0);
-  
-  const { notes, folders, settings, saveNotes, saveFolders, saveSettings, loadData } = useNotesData();
-  const { sortedNotes } = useMemoizedCalculations({ notes, folders, currentFolder });
-  const { handleRenameFolder, handleColorChange, handleDeleteFolder } = useFolderHandlers({
-    folders, notes, currentFolder, saveFolders, saveNotes, setCurrentFolder
-  });
-  const { searchResults, goToSearch, goBack, handleNotePress, handleCloseSearch } = useSearchNavigation({
-    notes, searchQuery, currentScreen, navigationStack, setCurrentScreen, setNavigationStack, setSelectedNote, setSearchQuery
-  });
-
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (showNoteDialog) { setShowNoteDialog(false); setSelectedNoteForAction(null); return true; }
-      if (showFolderDialog) { setShowFolderDialog(false); return true; }
-      if (showFolderSettings) { setShowFolderSettings(false); setSelectedFolderForSettings(null); return true; }
-
-      if (currentScreen !== 'notes' || navigationStack.length > 1) {
-        if (currentScreen === 'edit' && selectedNote) {
-          const cameFromSearch = navigationStack[navigationStack.length - 1] === 'search';
-          if (cameFromSearch) {
-            setCurrentScreen('search');
-            setSelectedNote(null);
             setNavigationStack(prev => prev.slice(0, -1));
           } else {
             setCurrentScreen('notes');
