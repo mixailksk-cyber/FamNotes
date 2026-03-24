@@ -366,4 +366,24 @@ const SettingsScreen = ({
                 <ActivityIndicator color="white" size="small" />
               ) : (
                 <>
-                  <Icon name="restore" size={24} color="white" style={{ margin
+                  <Icon name="restore" size={24} color="white" style={{ marginRight: 8 }} />
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Восстановить</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={{ marginBottom: 32 }}>
+          <Text style={{ fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 16 }}>О приложении</Text>
+          <View style={{ backgroundColor: '#F8F9FA', borderRadius: 16, padding: 20 }}>
+            <Text style={{ color: '#666', textAlign: 'center' }}>FamNotes v1.0.0</Text>
+            <Text style={{ color: '#999', textAlign: 'center', marginTop: 8, fontSize: 12 }}>Приложение для заметок</Text>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+export default SettingsScreen;
