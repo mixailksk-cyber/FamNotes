@@ -8,8 +8,15 @@ const NoteItem = ({ item, onPress, onLongPress, settings, showPin }) => {
   
   return (
     <TouchableOpacity 
-      onLongPress={onLongPress} 
-      onPress={onPress} 
+      onLongPress={() => {
+        console.log('NoteItem onLongPress triggered for:', item.id);
+        if (onLongPress) onLongPress();
+      }}
+      onPress={() => {
+        console.log('NoteItem onPress triggered for:', item.id);
+        if (onPress) onPress();
+      }}
+      activeOpacity={0.7}
       style={{ 
         padding: 12, 
         borderBottomWidth: 1, 
