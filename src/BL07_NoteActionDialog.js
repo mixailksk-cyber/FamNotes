@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import { width, getBrandColor } from './BL02_Constants';
 
 const NoteActionDialog = ({ 
@@ -29,6 +28,8 @@ const NoteActionDialog = ({
   const brandColor = getBrandColor(settings);
   const isInTrash = currentFolder === 'Корзина';
   
+  if (!visible) return null;
+  
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -42,7 +43,7 @@ const NoteActionDialog = ({
               <TouchableOpacity 
                 onPress={() => { onTogglePin(); onClose(); }} 
                 style={{ padding: 12, alignItems: 'center', flex: 1 }}>
-                <Icon name="push-pin" size={28} color={isPinned ? brandColor : '#999'} />
+                <Text style={{ fontSize: 28 }}>{isPinned ? "📌" : "📍"}</Text>
                 <Text style={{ fontSize: 12, color: '#333', marginTop: 4 }}>
                   {isPinned ? "Открепить" : "Закрепить"}
                 </Text>
@@ -51,7 +52,7 @@ const NoteActionDialog = ({
               <TouchableOpacity 
                 onPress={() => { onToggleLock(); onClose(); }} 
                 style={{ padding: 12, alignItems: 'center', flex: 1 }}>
-                <Icon name={isLocked ? "lock" : "lock-open"} size={28} color={isLocked ? brandColor : '#999'} />
+                <Text style={{ fontSize: 28 }}>{isLocked ? "🔒" : "🔓"}</Text>
                 <Text style={{ fontSize: 12, color: '#333', marginTop: 4 }}>
                   {isLocked ? "Разблок." : "Блокир."}
                 </Text>
@@ -77,22 +78,22 @@ const NoteActionDialog = ({
             <>
               <TouchableOpacity 
                 onPress={() => { onMove('Главная'); onClose(); }} 
-                style={{ marginTop: 16, padding: 12, backgroundColor: '#4CAF50', borderRadius: 5, alignItems: 'center' }}>
-                <Icon name="restore" size={20} color="white" style={{ marginRight: 8 }} />
+                style={{ marginTop: 16, padding: 12, backgroundColor: '#4CAF50', borderRadius: 5, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 20, marginRight: 8 }}>↩️</Text>
                 <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Восстановить</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 onPress={() => { onPermanentDelete(); onClose(); }} 
-                style={{ marginTop: 8, padding: 12, backgroundColor: '#FF4444', borderRadius: 5, alignItems: 'center' }}>
-                <Icon name="delete-forever" size={20} color="white" style={{ marginRight: 8 }} />
+                style={{ marginTop: 8, padding: 12, backgroundColor: '#FF4444', borderRadius: 5, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 20, marginRight: 8 }}>🗑</Text>
                 <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Удалить навсегда</Text>
               </TouchableOpacity>
             </>
           ) : (
             <TouchableOpacity 
               onPress={() => { onDelete(); onClose(); }} 
-              style={{ marginTop: 16, padding: 12, backgroundColor: '#F57C00', borderRadius: 5, alignItems: 'center' }}>
-              <Icon name="delete" size={20} color="white" style={{ marginRight: 8 }} />
+              style={{ marginTop: 16, padding: 12, backgroundColor: '#F57C00', borderRadius: 5, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 20, marginRight: 8 }}>🗑</Text>
               <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Переместить в корзину</Text>
             </TouchableOpacity>
           )}
