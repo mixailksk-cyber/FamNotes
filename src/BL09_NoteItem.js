@@ -7,6 +7,8 @@ const NoteItem = ({ item, onPress, onLongPress, settings, showPin }) => {
   const defaultColor = getBrandColor(settings);
   const { day, month } = formatDate(item.updatedAt || item.createdAt || Date.now());
   
+  const hasReminder = item.reminder && item.reminder > Date.now();
+  
   return (
     <TouchableOpacity 
       onLongPress={onLongPress} 
@@ -53,9 +55,14 @@ const NoteItem = ({ item, onPress, onLongPress, settings, showPin }) => {
         )}
       </View>
       
-      {showPin && item.pinned && (
-        <Icon name="push-pin" size={20} color={defaultColor} style={{ marginLeft: 8 }} />
-      )}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        {hasReminder && (
+          <Icon name="alarm" size={18} color={defaultColor} />
+        )}
+        {showPin && item.pinned && !hasReminder && (
+          <Icon name="push-pin" size={18} color={defaultColor} />
+        )}
+      </View>
     </TouchableOpacity>
   );
 };
