@@ -247,8 +247,6 @@ const AppContent = () => {
         title={currentFolder} 
         rightIcon="settings" 
         onRightPress={() => setCurrentScreen('settings')} 
-        showBack 
-        onBack={() => setCurrentScreen('folders')} 
         showSearch={true}
         onSearchPress={() => {
           setNavigationStack(prev => [...prev, 'notes']);
