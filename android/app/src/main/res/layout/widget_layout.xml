@@ -4,14 +4,14 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#FFFFFF"
-    android:padding="16dp">
+    android:padding="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="12dp">
+        android:layout_marginBottom="8dp">
 
         <TextView
             android:layout_width="0dp"
@@ -19,7 +19,7 @@
             android:layout_weight="1"
             android:text="FamNotes"
             android:textColor="#20A0A0"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <TextView
@@ -27,45 +27,35 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="0"
-            android:textColor="#999"
-            android:textSize="14sp"
-            android:background="#F0F0F0"
+            android:textColor="#666"
+            android:textSize="12sp"
+            android:background="#F5F5F5"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
             android:paddingTop="2dp"
-            android:paddingBottom="2dp" />
+            android:paddingBottom="2dp"
+            android:minWidth="24dp"
+            android:gravity="center" />
 
     </LinearLayout>
 
-    <ScrollView
+    <TextView
+        android:id="@+id/widget_notes_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
-
-        <TextView
-            android:id="@+id/widget_notes_list"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Загрузка..."
-            android:textColor="#333"
-            android:textSize="14sp"
-            android:lineSpacingExtra="4dp" />
-
-    </ScrollView>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#E0E0E0"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="8dp" />
+        android:text="Загрузка..."
+        android:textColor="#333"
+        android:textSize="13sp"
+        android:lineSpacingExtra="4dp"
+        android:minHeight="80dp" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Нажмите для открытия приложения"
+        android:text="Нажмите для открытия"
         android:textColor="#999"
-        android:textSize="12sp"
-        android:gravity="center" />
+        android:textSize="10sp"
+        android:gravity="center"
+        android:layout_marginTop="8dp" />
 
 </LinearLayout>
