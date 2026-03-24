@@ -354,15 +354,6 @@ const SettingsScreen = ({
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* О приложении */}
-        <View style={{ marginBottom: 32 }}>
-          <Text style={{ fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 16 }}>О приложении</Text>
-          <View style={{ backgroundColor: '#F8F9FA', borderRadius: 16, padding: 20 }}>
-            <Text style={{ color: '#666', textAlign: 'center' }}>FamNotes v1.0.0</Text>
-            <Text style={{ color: '#999', textAlign: 'center', marginTop: 8, fontSize: 12 }}>Приложение для заметок</Text>
-          </View>
-        </View>
       </ScrollView>
     </View>
   );
