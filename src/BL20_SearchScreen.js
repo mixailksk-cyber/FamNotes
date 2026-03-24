@@ -27,7 +27,6 @@ const SearchScreen = ({
     if (!localQuery || !localQuery.trim()) return [];
     
     const q = localQuery.toLowerCase().trim();
-    // Ищем во всех заметках, включая корзину (удаленные заметки)
     return notes.filter(note => {
       if (!note) return false;
       const title = note.title || '';
@@ -101,8 +100,6 @@ const SearchScreen = ({
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
       <Header 
         title="Поиск" 
-        showBack 
-        onBack={handleBack} 
         rightIcon="close" 
         onRightPress={handleBack} 
         showSearch={false} 
