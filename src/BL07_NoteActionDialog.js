@@ -166,7 +166,7 @@ const NoteActionDialog = ({
           padding: 20, 
           borderRadius: 10, 
           width: width - 40,
-          maxHeight: '80%',
+          maxHeight: '85%',
           transform: [{ scale: scaleAnim }]
         }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, textAlign: 'center', color: brandColor }}>
@@ -277,21 +277,11 @@ const NoteActionDialog = ({
             </View>
           )}
           
-          {/* Кнопка "Восстановить" для корзины */}
-          {isInTrash && (
-            <TouchableOpacity 
-              onPress={() => { onMove('Главная'); onClose(); }} 
-              style={{ marginTop: 16, padding: 12, backgroundColor: '#4CAF50', borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
-              <Icon name="restore" size={24} color="white" style={{ marginRight: 8 }} />
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Восстановить</Text>
-            </TouchableOpacity>
-          )}
-          
-          {/* Кнопка "Удалить безвозвратно" для корзины */}
+          {/* Кнопка "Удалить безвозвратно" для корзины (без кнопки восстановить) */}
           {isInTrash && (
             <TouchableOpacity 
               onPress={() => { onPermanentDelete(); onClose(); }} 
-              style={{ marginTop: 8, padding: 12, backgroundColor: '#FF4444', borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
+              style={{ marginTop: 16, padding: 12, backgroundColor: '#FF4444', borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
               <Icon name="delete-forever" size={24} color="white" style={{ marginRight: 8 }} />
               <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Удалить безвозвратно</Text>
             </TouchableOpacity>
