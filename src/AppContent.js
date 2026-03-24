@@ -234,6 +234,16 @@ const AppContent = () => {
     setShowNoteDialog(true);
   };
   
+  const handleNotePress = (note) => {
+    setSelectedNote(note);
+    setCurrentScreen('edit');
+  };
+  
+  const handleDeleteNote = (note) => {
+    const updatedNotes = notes.filter(n => n.id !== note.id);
+    saveNotes(updatedNotes);
+  };
+  
   const NotesListScreen = () => (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
       <Header 
@@ -263,8 +273,19 @@ const AppContent = () => {
           <NoteItem 
             item={item} 
             onPress={() => {
-              setSelectedNote(item);
-              setCurrentScreen('edit');
+              if (isInTrash) {
+                Alert.alert(
+                  'Заметка в корзине',
+                  'Вы можете восстановить заметку или удалить её безвозвратно',
+                  [
+                    { text: 'Отмена', style: 'cancel' },
+                    { text: 'Восстановить', onPress: () => handleRestoreFromTrash(item) },
+                    { text: 'Удалить безвозвратно', style: 'destructive', onPress: () => handleDeleteNote(item) }
+                  ]
+                );
+              } else {
+                handleNotePress(item);
+              }
             }} 
             onLongPress={() => handleLongPressOnNote(item)}
             settings={settings} 
@@ -415,6 +436,12 @@ const AppContent = () => {
           setSearchQuery={setSearchQuery}
           searchQuery={searchQuery}
           settings={settings}
+          folders={folders}
+          onMove={handleMoveNote}
+          onDelete={handleDeleteNote}
+          onPermanentDelete={handleDeleteNote}
+          onTogglePin={handleTogglePin}
+          onSetReminder={handleSetReminder}
         />
       );
     default:
