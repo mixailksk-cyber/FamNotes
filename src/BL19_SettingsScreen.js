@@ -14,7 +14,8 @@ const SettingsScreen = ({
   notes, 
   folders, 
   onBrandColorChange,
-  loadData
+  loadData,
+  setCurrentFolder
 }) => {
   const fontSizeOptions = [14, 16, 18, 20, 22, 24];
   const brandColor = getBrandColor(settings);
@@ -217,14 +218,15 @@ const SettingsScreen = ({
                   
                   console.log('✅ Data saved to AsyncStorage');
                   
-                  // Автоматическая перезагрузка данных
                   if (loadData) {
                     await loadData();
                   }
                   
-                  // Принудительное обновление текущей папки
+                  if (setCurrentFolder) {
+                    setCurrentFolder('Главная');
+                  }
+                  
                   setCurrentScreen('notes');
-                  setCurrentFolder('Главная');
                   
                   Alert.alert(
                     '✅ Успех', 
