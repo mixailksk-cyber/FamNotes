@@ -23,25 +23,23 @@ const EditNoteScreen = ({
     folder: currentFolder, 
     createdAt: Date.now(), 
     updatedAt: Date.now(), 
-    deleted: false, 
-    pinned: false,
+    deleted: false,
     locked: false
   });
   const [showColor, setShowColor] = useState(false);
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const contentInputRef = useRef(null);
   const titleInputRef = useRef(null);
   
   const isInTrash = note.folder === 'Корзина' || note.deleted === true;
-  const isLocked = note.locked === true;
 
   useEffect(() => {
-    if (contentInputRef.current && !isLocked) {
+    if (isEditing && contentInputRef.current) {
       setTimeout(() => {
         contentInputRef.current.focus();
       }, 100);
     }
-  }, []);
+  }, [isEditing]);
 
   const handleShare = async () => {
     try {
@@ -66,7 +64,7 @@ const EditNoteScreen = ({
               const updatedNotes = notes.filter(n => n.id !== note.id);
               onSave(updatedNotes);
             } else {
-              const updatedNote = { ...note, folder: 'Корзина', deleted: true, pinned: false, updatedAt: Date.now() };
+              const updatedNote = { ...note, folder: 'Корзина', deleted: true, updatedAt: Date.now() };
               onSave(updatedNote);
             }
             setCurrentScreen('notes');
@@ -74,26 +72,6 @@ const EditNoteScreen = ({
         }
       ]
     );
-  };
-
-  const handleTogglePin = () => {
-    const updatedNote = { ...note, pinned: !note.pinned, updatedAt: Date.now() };
-    setNote(updatedNote);
-    onSave(updatedNote);
-  };
-
-  const handleToggleLock = () => {
-    const updatedNote = { ...note, locked: !note.locked, updatedAt: Date.now() };
-    setNote(updatedNote);
-    if (!updatedNote.locked) {
-      setIsEditing(true);
-      setTimeout(() => {
-        if (contentInputRef.current) contentInputRef.current.focus();
-      }, 100);
-    } else {
-      setIsEditing(false);
-    }
-    onSave(updatedNote);
   };
 
   const handleBack = () => {
@@ -127,14 +105,7 @@ const EditNoteScreen = ({
   };
 
   const handleEditPress = () => {
-    if (!isLocked) {
-      setIsEditing(true);
-      setTimeout(() => {
-        if (contentInputRef.current) contentInputRef.current.focus();
-      }, 100);
-    } else {
-      Alert.alert('Заметка заблокирована', 'Нажмите на замок в шапке для разблокировки');
-    }
+    setIsEditing(true);
   };
 
   return (
@@ -152,18 +123,6 @@ const EditNoteScreen = ({
         showSearch={false} 
         brandColor={note.color || brandColor}
       >
-        {!isInTrash && (
-          <TouchableOpacity onPress={handleTogglePin}>
-            <Icon name="push-pin" size={24} color="white" />
-          </TouchableOpacity>
-        )}
-        
-        {!isInTrash && (
-          <TouchableOpacity onPress={handleToggleLock}>
-            <Icon name={note.locked ? "lock" : "lock-open"} size={24} color="white" />
-          </TouchableOpacity>
-        )}
-        
         <TouchableOpacity onPress={handleShare}>
           <Icon name="share" size={24} color="white" />
         </TouchableOpacity>
@@ -189,7 +148,7 @@ const EditNoteScreen = ({
               maxLength={TITLE_MAX_LENGTH} 
               value={note.title} 
               onChangeText={t => setNote({ ...note, title: t })}
-              editable={!isInTrash && isEditing && !isLocked}
+              editable={!isInTrash && isEditing}
             />
           ) : (
             <TouchableOpacity onPress={handleEditPress} activeOpacity={0.7}>
@@ -211,7 +170,7 @@ const EditNoteScreen = ({
             maxLength={NOTE_MAX_LENGTH} 
             value={note.content} 
             onChangeText={t => setNote({ ...note, content: t })}
-            editable={!isInTrash && isEditing && !isLocked}
+            editable={!isInTrash && isEditing}
             scrollEnabled={true}
           />
         ) : (
@@ -237,11 +196,9 @@ const EditNoteScreen = ({
           justifyContent: 'center', 
           alignItems: 'center', 
           elevation: 5, 
-          zIndex: 1000,
-          opacity: isLocked && !isEditing ? 0.5 : 1
+          zIndex: 1000
         }} 
         onPress={isEditing ? handleSave : handleEditPress}
-        disabled={isLocked && !isEditing}
       >
         <Icon name={isEditing ? "check" : "edit"} size={36} color="white" />
       </TouchableOpacity>
