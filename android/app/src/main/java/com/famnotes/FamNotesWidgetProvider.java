@@ -27,14 +27,14 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
                 StringBuilder notesText = new StringBuilder();
                 
                 if (notesArray.length() == 0) {
-                    notesText.append("Нет заметок\n\nНажмите + чтобы создать");
+                    notesText.append("Нет заметок");
                 } else {
                     for (int i = 0; i < Math.min(notesArray.length(), 5); i++) {
                         String title = notesArray.getJSONObject(i).optString("title", "Без названия");
                         notesText.append("• ").append(title).append("\n");
                     }
                     if (notesArray.length() > 5) {
-                        notesText.append("\n+ еще ").append(notesArray.length() - 5);
+                        notesText.append("+ еще ").append(notesArray.length() - 5);
                     }
                 }
                 
@@ -42,7 +42,7 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
                 views.setTextViewText(R.id.widget_notes_count, String.valueOf(notesArray.length()));
                 
             } catch (JSONException e) {
-                views.setTextViewText(R.id.widget_notes_list, "Ошибка загрузки");
+                views.setTextViewText(R.id.widget_notes_list, "Ошибка");
                 views.setTextViewText(R.id.widget_notes_count, "0");
             }
             
