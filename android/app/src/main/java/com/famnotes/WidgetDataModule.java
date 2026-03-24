@@ -13,7 +13,6 @@ import com.facebook.react.bridge.Promise;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 public class WidgetDataModule extends ReactContextBaseJavaModule {
     private static ReactApplicationContext reactContext;
@@ -41,34 +40,30 @@ public class WidgetDataModule extends ReactContextBaseJavaModule {
             ComponentName componentName = new ComponentName(context, FamNotesWidgetProvider.class);
             int[] appWidgetIds = appWidgetManager.getAppWidgetIds(componentName);
 
-            JSONArray notesArray = new JSONArray(notesJson);
-            
-            for (int appWidgetId : appWidgetIds) {
-                RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
+            if (appWidgetIds.length > 0) {
+                JSONArray notesArray = new JSONArray(notesJson);
                 
-                StringBuilder notesText = new StringBuilder();
-                for (int i = 0; i < Math.min(notesArray.length(), 5); i++) {
-                    JSONObject note = notesArray.getJSONObject(i);
-                    String title = note.optString("title", "Без названия");
-                    String content = note.optString("content", "...");
-                    notesText.append("• ").append(title).append("\n");
-                    if (content.length() > 30) {
-                        notesText.append("  ").append(content.substring(0, 30)).append("...\n");
+                for (int appWidgetId : appWidgetIds) {
+                    RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
+                    
+                    StringBuilder notesText = new StringBuilder();
+                    if (notesArray.length() == 0) {
+                        notesText.append("Нет заметок\n\nНажмите + чтобы создать");
                     } else {
-                        notesText.append("  ").append(content).append("\n");
+                        for (int i = 0; i < Math.min(notesArray.length(), 5); i++) {
+                            String title = notesArray.getJSONObject(i).optString("title", "Без названия");
+                            notesText.append("• ").append(title).append("\n");
+                        }
+                        if (notesArray.length() > 5) {
+                            notesText.append("\n+ еще ").append(notesArray.length() - 5);
+                        }
                     }
+                    
+                    views.setTextViewText(R.id.widget_notes_list, notesText.toString());
+                    views.setTextViewText(R.id.widget_notes_count, String.valueOf(notesArray.length()));
+                    
+                    appWidgetManager.updateAppWidget(appWidgetId, views);
                 }
-                
-                if (notesArray.length() == 0) {
-                    notesText.append("Нет заметок");
-                } else if (notesArray.length() > 5) {
-                    notesText.append("\n+ еще ").append(notesArray.length() - 5).append(" заметок");
-                }
-                
-                views.setTextViewText(R.id.widget_notes_list, notesText.toString());
-                views.setTextViewText(R.id.widget_notes_count, String.valueOf(notesArray.length()));
-                
-                appWidgetManager.updateAppWidget(appWidgetId, views);
             }
         } catch (JSONException e) {
             e.printStackTrace();
