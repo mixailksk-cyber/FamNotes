@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, Platform, Share } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Platform, Share, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from './BL04_Header';
 import { NOTE_COLORS, getBrandColor } from './BL02_Constants';
 import RNFS from 'react-native-fs';
@@ -11,10 +12,12 @@ const SettingsScreen = ({
   saveSettings, 
   notes, 
   folders, 
-  onBrandColorChange 
+  onBrandColorChange,
+  loadData  // добавляем функцию перезагрузки данных
 }) => {
   const fontSizeOptions = [14, 16, 18, 20, 22, 24];
   const brandColor = getBrandColor(settings);
+  const [isRestoring, setIsRestoring] = React.useState(false);
 
   const handleFontSizeChange = (size) => {
     saveSettings({ ...settings, fontSize: size });
@@ -48,7 +51,7 @@ const SettingsScreen = ({
 
   const handleBackup = async () => {
     try {
-      // Формируем данные для бэкапа в формате, совместимом с Expo версией
+      // Формируем данные для бэкапа
       const backupData = {
         notes: notes.map(note => ({
           id: note.id,
@@ -95,7 +98,6 @@ const SettingsScreen = ({
       const path = RNFS.DocumentDirectoryPath + '/' + fileName;
       await RNFS.writeFile(path, backupStr, 'utf8');
       
-      // Проверяем, что файл создан
       const fileExists = await RNFS.exists(path);
       if (fileExists) {
         const fileInfo = await RNFS.stat(path);
@@ -133,6 +135,8 @@ const SettingsScreen = ({
 
   const handleRestore = async () => {
     try {
+      setIsRestoring(true);
+      
       const result = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
       });
@@ -170,52 +174,88 @@ const SettingsScreen = ({
           'Восстановление данных',
           `Найдено ${backup.notes.length} заметок и ${backup.folders.length} папок. Все текущие данные будут заменены. Продолжить?`,
           [
-            { text: 'Отмена', style: 'cancel' },
+            { text: 'Отмена', style: 'cancel', onPress: () => setIsRestoring(false) },
             { 
               text: 'Восстановить', 
               onPress: async () => {
                 try {
                   // Нормализуем заметки
                   const normalizedNotes = backup.notes.map(note => ({
-                    ...note,
+                    id: note.id || Date.now().toString() + Math.random(),
+                    title: note.title || '',
+                    content: note.content || '',
+                    folder: note.folder || 'Главная',
                     color: note.color || brandColor,
+                    createdAt: note.createdAt || Date.now(),
+                    updatedAt: note.updatedAt || Date.now(),
                     deleted: note.deleted || false,
                     pinned: note.pinned || false,
-                    locked: note.locked || false,
-                    updatedAt: note.updatedAt || Date.now(),
-                    createdAt: note.createdAt || Date.now()
+                    locked: note.locked || false
                   }));
                   
-                  // Нормализуем папки
-                  const normalizedFolders = backup.folders.map(folder => {
-                    if (typeof folder === 'object' && folder.name) {
-                      return folder;
-                    }
-                    return folder;
+                  // Нормализуем папки (добавляем "Главная" и "Корзина" если их нет)
+                  let normalizedFolders = [...backup.folders];
+                  
+                  // Проверяем наличие системных папок
+                  const hasMain = normalizedFolders.some(f => {
+                    const name = typeof f === 'object' ? f.name : f;
+                    return name === 'Главная';
+                  });
+                  const hasTrash = normalizedFolders.some(f => {
+                    const name = typeof f === 'object' ? f.name : f;
+                    return name === 'Корзина';
                   });
                   
-                  // Обновляем данные
-                  await RNFS.writeFile(
-                    RNFS.DocumentDirectoryPath + '/restore_temp.json',
-                    JSON.stringify({ notes: normalizedNotes, folders: normalizedFolders, settings: backup.settings }),
-                    'utf8'
-                  );
+                  if (!hasMain) normalizedFolders.unshift('Главная');
+                  if (!hasTrash) normalizedFolders.push('Корзина');
+                  
+                  // Получаем настройки
+                  const restoredSettings = backup.settings || {
+                    fontSize: 16,
+                    brandColor: brandColor
+                  };
+                  
+                  console.log('💾 Saving to AsyncStorage...');
+                  
+                  // Сохраняем в AsyncStorage
+                  await AsyncStorage.setItem('notes', JSON.stringify(normalizedNotes));
+                  await AsyncStorage.setItem('folders', JSON.stringify(normalizedFolders));
+                  await AsyncStorage.setItem('settings', JSON.stringify(restoredSettings));
+                  
+                  console.log('✅ Data saved to AsyncStorage');
+                  
+                  // Обновляем состояние через loadData
+                  if (loadData) {
+                    await loadData();
+                  }
                   
                   Alert.alert(
                     '✅ Успех', 
-                    'Данные восстановлены. Перезапустите приложение для применения изменений.',
-                    [{ text: 'OK', onPress: () => setCurrentScreen('notes') }]
+                    `Восстановлено ${normalizedNotes.length} заметок и ${normalizedFolders.length} папок.\n\nПерезапустите приложение для полного применения изменений.`,
+                    [
+                      { 
+                        text: 'OK', 
+                        onPress: () => {
+                          setIsRestoring(false);
+                          setCurrentScreen('notes');
+                        }
+                      }
+                    ]
                   );
-                } catch (restoreError) {
-                  console.error('Restore save error:', restoreError);
-                  Alert.alert('❌ Ошибка', 'Не удалось сохранить восстановленные данные: ' + restoreError.message);
+                } catch (saveError) {
+                  console.error('Restore save error:', saveError);
+                  Alert.alert('❌ Ошибка', 'Не удалось сохранить восстановленные данные: ' + saveError.message);
+                  setIsRestoring(false);
                 }
               }
             }
           ]
         );
+      } else {
+        setIsRestoring(false);
       }
     } catch (e) {
+      setIsRestoring(false);
       if (e.code !== 'DOCUMENT_PICKER_CANCELED') {
         console.error('Restore error:', e);
         Alert.alert('❌ Ошибка', 'Не удалось восстановить данные: ' + e.message);
@@ -326,6 +366,7 @@ const SettingsScreen = ({
                 justifyContent: 'center'
               }} 
               onPress={handleBackup}
+              disabled={isRestoring}
             >
               <Text style={{ fontSize: 20, marginRight: 8 }}>💾</Text>
               <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Создать копию</Text>
@@ -333,7 +374,7 @@ const SettingsScreen = ({
             
             <TouchableOpacity 
               style={{ 
-                backgroundColor: '#FF6B6B', 
+                backgroundColor: isRestoring ? '#CCCCCC' : '#FF6B6B', 
                 padding: 16, 
                 borderRadius: 12, 
                 flexDirection: 'row', 
@@ -341,9 +382,16 @@ const SettingsScreen = ({
                 justifyContent: 'center'
               }} 
               onPress={handleRestore}
+              disabled={isRestoring}
             >
-              <Text style={{ fontSize: 20, marginRight: 8 }}>↩️</Text>
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Восстановить</Text>
+              {isRestoring ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <>
+                  <Text style={{ fontSize: 20, marginRight: 8 }}>↩️</Text>
+                  <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Восстановить</Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         </View>
