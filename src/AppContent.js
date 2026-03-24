@@ -20,6 +20,7 @@ const AppContent = () => {
   const [navigationStack, setNavigationStack] = React.useState(['notes']);
   const [showNoteDialog, setShowNoteDialog] = React.useState(false);
   const [selectedNoteForAction, setSelectedNoteForAction] = React.useState(null);
+  const [searchQuery, setSearchQuery] = React.useState('');
   
   const { notes, folders, settings, saveNotes, saveFolders, saveSettings, loadData } = useNotesData();
 
@@ -33,15 +34,17 @@ const AppContent = () => {
         return true;
       }
       
+      // Если на экране редактирования и пришли из поиска
+      if (currentScreen === 'edit' && navigationStack[navigationStack.length - 1] === 'search') {
+        setCurrentScreen('search');
+        setSelectedNote(null);
+        setNavigationStack(prev => prev.slice(0, -1));
+        return true;
+      }
+      
       // Если на экране редактирования
       if (currentScreen === 'edit') {
-        // Проверяем, пришли ли из поиска
-        const cameFromSearch = navigationStack[navigationStack.length - 1] === 'search';
-        if (cameFromSearch) {
-          setCurrentScreen('search');
-        } else {
-          setCurrentScreen('notes');
-        }
+        setCurrentScreen('notes');
         setSelectedNote(null);
         setNavigationStack(prev => prev.slice(0, -1));
         return true;
@@ -50,6 +53,7 @@ const AppContent = () => {
       // Если на экране поиска
       if (currentScreen === 'search') {
         setCurrentScreen('notes');
+        setSearchQuery('');
         setNavigationStack(prev => prev.slice(0, -1));
         return true;
       }
@@ -109,7 +113,8 @@ const AppContent = () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       deleted: false,
-      pinned: false
+      pinned: false,
+      locked: false
     };
     setSelectedNote(newNote);
     setCurrentScreen('edit');
@@ -175,6 +180,18 @@ const AppContent = () => {
     );
   };
   
+  const handleQuickDelete = (note) => {
+    if (note.folder === 'Корзина') {
+      const updatedNotes = notes.filter(n => n.id !== note.id);
+      saveNotes(updatedNotes);
+    } else {
+      const updatedNote = { ...note, folder: 'Корзина', deleted: true, pinned: false, updatedAt: Date.now() };
+      const index = notes.findIndex(n => n.id === note.id);
+      const newNotes = [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)];
+      saveNotes(newNotes);
+    }
+  };
+  
   const handleRenameFolder = (oldName, newName) => {
     const updatedFolders = folders.map(f => {
       if (typeof f === 'object' && f.name === oldName) return { ...f, name: newName };
@@ -222,18 +239,6 @@ const AppContent = () => {
     setShowNoteDialog(true);
   };
   
-  const handleQuickDelete = (note) => {
-    if (note.folder === 'Корзина') {
-      const updatedNotes = notes.filter(n => n.id !== note.id);
-      saveNotes(updatedNotes);
-    } else {
-      const updatedNote = { ...note, folder: 'Корзина', deleted: true, pinned: false, updatedAt: Date.now() };
-      const index = notes.findIndex(n => n.id === note.id);
-      const newNotes = [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)];
-      saveNotes(newNotes);
-    }
-  };
-  
   const NotesListScreen = () => (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
       <Header 
@@ -269,6 +274,7 @@ const AppContent = () => {
             onLongPress={() => handleLongPressOnNote(item)}
             settings={settings} 
             showPin={!isInTrash}
+            onPinPress={() => handleTogglePin(item.id)}
           />
         )} 
         ListEmptyComponent={
@@ -303,6 +309,8 @@ const AppContent = () => {
   const ActionDialog = () => {
     if (!selectedNoteForAction) return null;
     
+    const isInTrashFolder = selectedNoteForAction.folder === 'Корзина' || selectedNoteForAction.deleted === true;
+    
     return (
       <NoteActionDialog 
         visible={showNoteDialog} 
@@ -313,7 +321,7 @@ const AppContent = () => {
         folders={folders} 
         currentFolder={selectedNoteForAction?.folder || currentFolder} 
         onMove={(targetFolder) => {
-          if (selectedNoteForAction.folder === 'Корзина') {
+          if (isInTrashFolder) {
             handleRestoreFromTrash(selectedNoteForAction);
           } else {
             handleMoveNote(selectedNoteForAction, targetFolder);
@@ -322,10 +330,8 @@ const AppContent = () => {
           setSelectedNoteForAction(null);
         }} 
         onDelete={() => {
-          if (selectedNoteForAction.folder === 'Корзина') {
-            const updatedNotes = notes.filter(n => n.id !== selectedNoteForAction.id);
-            saveNotes(updatedNotes);
-          } else {
+          // Переместить в корзину (для обычных заметок)
+          if (!isInTrashFolder) {
             const updatedNote = { ...selectedNoteForAction, folder: 'Корзина', deleted: true, pinned: false, updatedAt: Date.now() };
             const index = notes.findIndex(n => n.id === selectedNoteForAction.id);
             const newNotes = [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)];
@@ -335,14 +341,18 @@ const AppContent = () => {
           setSelectedNoteForAction(null);
         }} 
         onPermanentDelete={() => {
+          // Удалить безвозвратно
           const updatedNotes = notes.filter(n => n.id !== selectedNoteForAction.id);
           saveNotes(updatedNotes);
           setShowNoteDialog(false);
           setSelectedNoteForAction(null);
         }} 
         onTogglePin={() => handleTogglePin(selectedNoteForAction.id)}
+        onToggleLock={() => {}}
         isPinned={selectedNoteForAction?.pinned || false}
+        isLocked={false}
         settings={settings} 
+        isInTrash={isInTrashFolder}
       />
     );
   };
@@ -404,11 +414,14 @@ const AppContent = () => {
           setSelectedNote={setSelectedNote}
           setSelectedNoteForAction={setSelectedNoteForAction}
           setShowNoteDialog={setShowNoteDialog}
-          goBack={() => setCurrentScreen('notes')}
+          goBack={() => {
+            setCurrentScreen('notes');
+            setSearchQuery('');
+          }}
           navigationStack={navigationStack}
           setNavigationStack={setNavigationStack}
-          setSearchQuery={() => {}}
-          searchQuery=""
+          setSearchQuery={setSearchQuery}
+          searchQuery={searchQuery}
           settings={settings}
         />
       );
