@@ -99,6 +99,17 @@ const EditNoteScreen = ({
 
   const handleEditPress = () => {
     setIsEditing(true);
+    // Устанавливаем курсор в начало после открытия режима редактирования
+    setTimeout(() => {
+      if (contentInputRef.current) {
+        contentInputRef.current.setNativeProps({
+          selection: { start: 0, end: 0 }
+        });
+      }
+      if (titleInputRef.current && !note.title) {
+        titleInputRef.current.focus();
+      }
+    }, 100);
   };
 
   const handleColorSelect = (color) => {
@@ -159,7 +170,7 @@ const EditNoteScreen = ({
         {isEditing ? (
           <TextInput 
             ref={contentInputRef}
-            style={{ fontSize: settings.fontSize, paddingHorizontal: 16, paddingVertical: 12, textAlignVertical: 'top', color: '#333', minHeight: 200 }} 
+            style={{ fontSize: settings.fontSize, paddingHorizontal: 16, paddingVertical: 12, textAlignVertical: 'top', color: '#333', minHeight: 200, lineHeight: settings.fontSize * 1.5 }} 
             placeholder="Текст заметки..." 
             placeholderTextColor="#999" 
             multiline 
