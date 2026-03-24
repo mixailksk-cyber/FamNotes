@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, FlatList, Text, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getBrandColor } from './BL02_Constants';
 import Header from './BL04_Header';
 import NoteItem from './BL09_NoteItem';
