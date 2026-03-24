@@ -40,10 +40,12 @@ const FolderSettingsDialog = ({ visible, onClose, folderName, currentColor, onRe
       return;
     }
     
+    // Сначала переименовываем
     if (newName.trim() !== folderName) {
       onRename(newName.trim());
     }
     
+    // Затем меняем цвет
     if (selectedColor !== currentColor) {
       onColorChange(selectedColor);
     }
