@@ -234,16 +234,6 @@ const AppContent = () => {
     setShowNoteDialog(true);
   };
   
-  const handleNotePress = (note) => {
-    setSelectedNote(note);
-    setCurrentScreen('edit');
-  };
-  
-  const handleDeleteNote = (note) => {
-    const updatedNotes = notes.filter(n => n.id !== note.id);
-    saveNotes(updatedNotes);
-  };
-  
   const NotesListScreen = () => (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
       <Header 
@@ -273,18 +263,12 @@ const AppContent = () => {
           <NoteItem 
             item={item} 
             onPress={() => {
-              if (isInTrash) {
-                Alert.alert(
-                  'Заметка в корзине',
-                  'Вы можете восстановить заметку или удалить её безвозвратно',
-                  [
-                    { text: 'Отмена', style: 'cancel' },
-                    { text: 'Восстановить', onPress: () => handleRestoreFromTrash(item) },
-                    { text: 'Удалить безвозвратно', style: 'destructive', onPress: () => handleDeleteNote(item) }
-                  ]
-                );
+              // Если заметка в корзине, не открываем редактирование
+              if (item.folder === 'Корзина' || item.deleted === true) {
+                handleLongPressOnNote(item);
               } else {
-                handleNotePress(item);
+                setSelectedNote(item);
+                setCurrentScreen('edit');
               }
             }} 
             onLongPress={() => handleLongPressOnNote(item)}
@@ -300,6 +284,7 @@ const AppContent = () => {
         contentContainerStyle={{ paddingBottom: 100 }}
       />
       
+      {/* Кнопка создания заметки - не показываем в корзине */}
       {!isInTrash && (
         <TouchableOpacity 
           style={{ 
@@ -436,12 +421,7 @@ const AppContent = () => {
           setSearchQuery={setSearchQuery}
           searchQuery={searchQuery}
           settings={settings}
-          folders={folders}
-          onMove={handleMoveNote}
-          onDelete={handleDeleteNote}
-          onPermanentDelete={handleDeleteNote}
-          onTogglePin={handleTogglePin}
-          onSetReminder={handleSetReminder}
+          onLongPressNote={handleLongPressOnNote}
         />
       );
     default:
