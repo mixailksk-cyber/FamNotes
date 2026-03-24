@@ -43,23 +43,17 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:fillViewport="true"
         android:scrollbars="vertical">
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/widget_notes_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/widget_notes_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Загрузка..."
-                android:textColor="#FFFFFF"
-                android:textSize="13sp"
-                android:lineSpacingExtra="4dp" />
-
-        </LinearLayout>
+            android:text="Загрузка..."
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:lineSpacingExtra="4dp" />
 
     </ScrollView>
 
