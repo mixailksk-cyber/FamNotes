@@ -11,9 +11,7 @@ const NoteActionDialog = ({
   onDelete, 
   onPermanentDelete, 
   onTogglePin, 
-  onToggleLock, 
   isPinned, 
-  isLocked, 
   currentFolder, 
   settings 
 }) => {
@@ -40,25 +38,14 @@ const NoteActionDialog = ({
           </Text>
           
           {!isInTrash && (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 8 }}>
-              <TouchableOpacity 
-                onPress={() => { onTogglePin(); onClose(); }} 
-                style={{ padding: 12, alignItems: 'center', flex: 1 }}>
-                <Icon name="push-pin" size={28} color={isPinned ? brandColor : '#999'} />
-                <Text style={{ fontSize: 12, color: '#333', marginTop: 4 }}>
-                  {isPinned ? "Открепить" : "Закрепить"}
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                onPress={() => { onToggleLock(); onClose(); }} 
-                style={{ padding: 12, alignItems: 'center', flex: 1 }}>
-                <Icon name={isLocked ? "lock" : "lock-open"} size={28} color={isLocked ? brandColor : '#999'} />
-                <Text style={{ fontSize: 12, color: '#333', marginTop: 4 }}>
-                  {isLocked ? "Разблок." : "Блокир."}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity 
+              onPress={() => { onTogglePin(); onClose(); }} 
+              style={{ padding: 12, alignItems: 'center', marginBottom: 8 }}>
+              <Icon name="push-pin" size={28} color={isPinned ? brandColor : '#999'} />
+              <Text style={{ fontSize: 12, color: '#333', marginTop: 4 }}>
+                {isPinned ? "Открепить" : "Закрепить"}
+              </Text>
+            </TouchableOpacity>
           )}
           
           {availableFolders.length > 0 && !isInTrash && (
