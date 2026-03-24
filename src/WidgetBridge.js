@@ -24,9 +24,13 @@ export const updateWidgetData = async (notes) => {
     console.log('📱 Updating widget with', mainFolderNotes.length, 'notes');
     
     // Для Android нативного виджета
-    if (Platform.OS === 'android' && WidgetDataModule) {
-      WidgetDataModule.updateWidgetNotes(notesJson);
-      console.log('✅ Widget updated via native module');
+    if (Platform.OS === 'android') {
+      if (WidgetDataModule) {
+        WidgetDataModule.updateWidgetNotes(notesJson);
+        console.log('✅ Widget updated via native module');
+      } else {
+        console.log('⚠️ WidgetDataModule not available');
+      }
     }
     
     // Сохраняем в AsyncStorage для возможного использования
