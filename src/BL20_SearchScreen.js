@@ -27,8 +27,9 @@ const SearchScreen = ({
     if (!localQuery || !localQuery.trim()) return [];
     
     const q = localQuery.toLowerCase().trim();
+    // Ищем во всех заметках, включая корзину (удаленные заметки)
     return notes.filter(note => {
-      if (!note || note.deleted) return false;
+      if (!note) return false;
       const title = note.title || '';
       const content = note.content || '';
       return title.toLowerCase().includes(q) || content.toLowerCase().includes(q);
