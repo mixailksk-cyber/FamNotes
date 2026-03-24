@@ -131,8 +131,6 @@ const FoldersScreen = ({
     <View style={{ flex: 1, backgroundColor: 'white' }}>
       <Header 
         title="Выбор папки" 
-        showBack 
-        onBack={() => setCurrentScreen('notes')} 
         rightIcon="settings" 
         onRightPress={() => setCurrentScreen('settings')} 
         showSearch={false}
