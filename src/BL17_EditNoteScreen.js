@@ -23,8 +23,7 @@ const EditNoteScreen = ({
     folder: currentFolder, 
     createdAt: Date.now(), 
     updatedAt: Date.now(), 
-    deleted: false,
-    locked: false
+    deleted: false
   });
   const [showColor, setShowColor] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -51,27 +50,15 @@ const EditNoteScreen = ({
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Удалить заметку',
-      isInTrash ? 'Удалить заметку безвозвратно?' : 'Переместить заметку в корзину?',
-      [
-        { text: 'Отмена', style: 'cancel' },
-        { 
-          text: 'Удалить', 
-          style: 'destructive',
-          onPress: () => {
-            if (isInTrash) {
-              const updatedNotes = notes.filter(n => n.id !== note.id);
-              onSave(updatedNotes);
-            } else {
-              const updatedNote = { ...note, folder: 'Корзина', deleted: true, updatedAt: Date.now() };
-              onSave(updatedNote);
-            }
-            setCurrentScreen('notes');
-          }
-        }
-      ]
-    );
+    // Без подтверждения, сразу удаляем
+    if (isInTrash) {
+      const updatedNotes = notes.filter(n => n.id !== note.id);
+      onSave(updatedNotes);
+    } else {
+      const updatedNote = { ...note, folder: 'Корзина', deleted: true, updatedAt: Date.now() };
+      onSave(updatedNote);
+    }
+    setCurrentScreen('notes');
   };
 
   const handleBack = () => {
@@ -151,11 +138,9 @@ const EditNoteScreen = ({
               editable={!isInTrash && isEditing}
             />
           ) : (
-            <TouchableOpacity onPress={handleEditPress} activeOpacity={0.7}>
-              <Text style={{ fontSize: settings.fontSize + 2, fontWeight: 'bold', paddingVertical: 8, color: '#333' }}>
-                {note.title || 'Заголовок'}
-              </Text>
-            </TouchableOpacity>
+            <Text style={{ fontSize: settings.fontSize + 2, fontWeight: 'bold', paddingVertical: 8, color: '#333' }}>
+              {note.title || 'Заголовок'}
+            </Text>
           )}
           <View style={{ height: 2, backgroundColor: note.color || brandColor, width: '100%', marginTop: 4 }} />
         </View>
@@ -176,7 +161,6 @@ const EditNoteScreen = ({
         ) : (
           <Text 
             selectable={true}
-            onPress={handleEditPress}
             style={{ fontSize: settings.fontSize, paddingHorizontal: 16, paddingVertical: 12, color: '#333', lineHeight: settings.fontSize * 1.5 }}
           >
             {note.content || '...'}
