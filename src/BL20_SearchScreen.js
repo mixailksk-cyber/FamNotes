@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, TextInput, FlatList, Text, SafeAreaView } from 'react-native';
+import { View, TextInput, FlatList, Text, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Header from './BL04_Header';
 import NoteItem from './BL09_NoteItem';
 import { getBrandColor } from './BL02_Constants';
+import NoteActionDialog from './BL07_NoteActionDialog';
 
 const SearchScreen = ({ 
   notes, 
@@ -16,9 +17,18 @@ const SearchScreen = ({
   setNavigationStack, 
   setSearchQuery, 
   searchQuery: initialSearchQuery, 
-  settings 
+  settings,
+  folders,
+  onMove,
+  onDelete,
+  onPermanentDelete,
+  onTogglePin,
+  onSetReminder,
+  reminderTime
 }) => {
   const [localQuery, setLocalQuery] = useState(initialSearchQuery || '');
+  const [showDialog, setShowDialog] = useState(false);
+  const [selectedNoteForDialog, setSelectedNoteForDialog] = useState(null);
   const inputRef = useRef(null);
   const brandColor = getBrandColor(settings || {});
 
@@ -70,12 +80,8 @@ const SearchScreen = ({
   };
 
   const handleLongPress = (note) => {
-    if (note && typeof setSelectedNoteForAction === 'function') {
-      setSelectedNoteForAction(note);
-      if (typeof setShowNoteDialog === 'function') {
-        setShowNoteDialog(true);
-      }
-    }
+    setSelectedNoteForDialog(note);
+    setShowDialog(true);
   };
 
   const handleBack = () => {
@@ -95,6 +101,8 @@ const SearchScreen = ({
       settings={settings || {}} 
     />
   );
+
+  const isInTrashFolder = selectedNoteForDialog?.folder === 'Корзина' || selectedNoteForDialog?.deleted === true;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
@@ -144,6 +152,47 @@ const SearchScreen = ({
             </View>
           } 
           contentContainerStyle={{ flexGrow: 1 }}
+        />
+      )}
+      
+      {selectedNoteForDialog && (
+        <NoteActionDialog 
+          visible={showDialog} 
+          onClose={() => { 
+            setShowDialog(false); 
+            setSelectedNoteForDialog(null); 
+          }} 
+          folders={folders} 
+          currentFolder={selectedNoteForDialog?.folder || 'Главная'} 
+          onMove={(targetFolder) => {
+            if (onMove) onMove(selectedNoteForDialog, targetFolder);
+            setShowDialog(false);
+            setSelectedNoteForDialog(null);
+          }} 
+          onDelete={() => {
+            if (onDelete) onDelete(selectedNoteForDialog);
+            setShowDialog(false);
+            setSelectedNoteForDialog(null);
+          }} 
+          onPermanentDelete={() => {
+            if (onPermanentDelete) onPermanentDelete(selectedNoteForDialog);
+            setShowDialog(false);
+            setSelectedNoteForDialog(null);
+          }} 
+          onTogglePin={() => {
+            if (onTogglePin) onTogglePin(selectedNoteForDialog.id);
+            setShowDialog(false);
+            setSelectedNoteForDialog(null);
+          }}
+          onSetReminder={(time) => {
+            if (onSetReminder) onSetReminder(selectedNoteForDialog.id, time);
+            setShowDialog(false);
+            setSelectedNoteForDialog(null);
+          }}
+          isPinned={selectedNoteForDialog?.pinned || false}
+          isInTrash={isInTrashFolder}
+          reminderTime={selectedNoteForDialog?.reminder || null}
+          settings={settings} 
         />
       )}
     </SafeAreaView>
