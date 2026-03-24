@@ -99,9 +99,10 @@ const EditNoteScreen = ({
 
   const handleEditPress = () => {
     setIsEditing(true);
-    // Устанавливаем курсор в начало после открытия режима редактирования
+    // Устанавливаем курсор в начало текста заметки
     setTimeout(() => {
       if (contentInputRef.current) {
+        contentInputRef.current.focus();
         contentInputRef.current.setNativeProps({
           selection: { start: 0, end: 0 }
         });
@@ -116,6 +117,14 @@ const EditNoteScreen = ({
     setNote({ ...note, color, updatedAt: Date.now() });
     if (!isEditing && !isInTrash) {
       setIsEditing(true);
+      setTimeout(() => {
+        if (contentInputRef.current) {
+          contentInputRef.current.focus();
+          contentInputRef.current.setNativeProps({
+            selection: { start: 0, end: 0 }
+          });
+        }
+      }, 100);
     }
   };
 
@@ -127,13 +136,15 @@ const EditNoteScreen = ({
     >
       <Header 
         title={isEditing ? "Редактирование" : "Просмотр"}
-        showPalette 
-        onPalettePress={() => setShowColor(true)} 
         showSearch={false} 
         brandColor={note.color || brandColor}
       >
         <TouchableOpacity onPress={handleShare}>
           <Icon name="share" size={24} color="white" />
+        </TouchableOpacity>
+        
+        <TouchableOpacity onPress={() => setShowColor(true)}>
+          <Icon name="palette" size={24} color="white" />
         </TouchableOpacity>
         
         <TouchableOpacity onPress={handleDelete}>
