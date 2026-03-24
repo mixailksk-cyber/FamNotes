@@ -42,27 +42,27 @@ const Header = ({
         </Text>
       </View>
       
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
         {children && React.Children.map(children, (child, index) => (
-          <View key={index} style={{ marginLeft: 20 }}>
+          <View key={index}>
             {child}
           </View>
         ))}
         
         {showPalette && (
-          <TouchableOpacity onPress={onPalettePress} style={{ marginLeft: 20 }}>
+          <TouchableOpacity onPress={onPalettePress}>
             <Icon name="palette" size={24} color="white" />
           </TouchableOpacity>
         )}
         
         {showSearch && (
-          <TouchableOpacity onPress={onSearchPress} style={{ marginLeft: 20 }}>
+          <TouchableOpacity onPress={onSearchPress}>
             <Icon name="search" size={24} color="white" />
           </TouchableOpacity>
         )}
         
         {rightIcon && (
-          <TouchableOpacity onPress={onRightPress} style={{ marginLeft: 20 }}>
+          <TouchableOpacity onPress={onRightPress}>
             <Icon name={rightIcon} size={24} color="white" />
           </TouchableOpacity>
         )}
