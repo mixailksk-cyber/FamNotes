@@ -343,18 +343,19 @@ const AppContent = () => {
           <ActionDialog />
         </>
       );
-    case 'settings':
-      return (
-        <SettingsScreen 
-          setCurrentScreen={setCurrentScreen}
-          settings={settings}
-          saveSettings={saveSettings}
-          notes={notes}
-          folders={folders}
-          onBrandColorChange={() => {}}
-          loadData={loadData}
-        />
-      );
+case 'settings':
+  return (
+    <SettingsScreen 
+      setCurrentScreen={setCurrentScreen}
+      settings={settings}
+      saveSettings={saveSettings}
+      notes={notes}
+      folders={folders}
+      onBrandColorChange={() => {}}
+      loadData={loadData}
+      setCurrentFolder={setCurrentFolder}
+    />
+  );
     case 'folders':
       return (
         <FoldersScreen 
