@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import { formatDate, getBrandColor } from './BL02_Constants';
 
 const NoteItem = ({ item, onPress, onLongPress, settings, showPin }) => {
@@ -53,7 +52,7 @@ const NoteItem = ({ item, onPress, onLongPress, settings, showPin }) => {
       </View>
       
       {showPin && item.pinned && (
-        <Icon name="push-pin" size={20} color={defaultColor} style={{ marginLeft: 8 }} />
+        <Text style={{ fontSize: 18, color: defaultColor, marginLeft: 8 }}>📌</Text>
       )}
     </TouchableOpacity>
   );
