@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Share, ScrollView } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import Header from './BL04_Header';
 import ColorPickerModal from './BL08_ColorPickerModal';
 import { TITLE_MAX_LENGTH, NOTE_MAX_LENGTH, getBrandColor } from './BL02_Constants';
@@ -153,22 +154,22 @@ const EditNoteScreen = ({
       >
         {!isInTrash && (
           <TouchableOpacity onPress={handleTogglePin}>
-            <Text style={{ fontSize: 22, color: 'white' }}>{note.pinned ? "📌" : "📍"}</Text>
+            <Icon name="push-pin" size={24} color="white" />
           </TouchableOpacity>
         )}
         
         {!isInTrash && (
           <TouchableOpacity onPress={handleToggleLock}>
-            <Text style={{ fontSize: 22, color: 'white' }}>{note.locked ? "🔒" : "🔓"}</Text>
+            <Icon name={note.locked ? "lock" : "lock-open"} size={24} color="white" />
           </TouchableOpacity>
         )}
         
         <TouchableOpacity onPress={handleShare}>
-          <Text style={{ fontSize: 22, color: 'white' }}>📤</Text>
+          <Icon name="share" size={24} color="white" />
         </TouchableOpacity>
         
         <TouchableOpacity onPress={handleDelete}>
-          <Text style={{ fontSize: 22, color: 'white' }}>🗑</Text>
+          <Icon name="delete" size={24} color="white" />
         </TouchableOpacity>
       </Header>
 
@@ -242,7 +243,7 @@ const EditNoteScreen = ({
         onPress={isEditing ? handleSave : handleEditPress}
         disabled={isLocked && !isEditing}
       >
-        <Text style={{ fontSize: 32, color: 'white' }}>{isEditing ? "✓" : "✎"}</Text>
+        <Icon name={isEditing ? "check" : "edit"} size={36} color="white" />
       </TouchableOpacity>
 
       <ColorPickerModal 
