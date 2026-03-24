@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, Platform, Share } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import Header from './BL04_Header';
 import { NOTE_COLORS, getBrandColor } from './BL02_Constants';
 import RNFS from 'react-native-fs';
@@ -38,14 +37,47 @@ const SettingsScreen = ({
 
   const formatDateForFilename = () => {
     const date = new Date();
-    return `${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}_${date.getHours()}-${date.getMinutes()}-${date.getSeconds()}`;
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const seconds = date.getSeconds();
+    return `${day}-${month}-${year}_${hours}-${minutes}-${seconds}`;
   };
 
   const handleBackup = async () => {
     try {
-      const backup = { notes, folders, settings };
-      const backupStr = JSON.stringify(backup, null, 2);
+      // Формируем данные для бэкапа в формате, совместимом с Expo версией
+      const backupData = {
+        notes: notes.map(note => ({
+          id: note.id,
+          title: note.title || '',
+          content: note.content || '',
+          folder: note.folder || 'Главная',
+          color: note.color || brandColor,
+          createdAt: note.createdAt || Date.now(),
+          updatedAt: note.updatedAt || Date.now(),
+          deleted: note.deleted || false,
+          pinned: note.pinned || false,
+          locked: note.locked || false
+        })),
+        folders: folders.map(folder => {
+          if (typeof folder === 'object') {
+            return { name: folder.name, color: folder.color };
+          }
+          return folder;
+        }),
+        settings: {
+          fontSize: settings.fontSize || 16,
+          brandColor: settings.brandColor || brandColor
+        }
+      };
+      
+      const backupStr = JSON.stringify(backupData, null, 2);
       const fileName = `FamNote_Backup_${formatDateForFilename()}.bak`;
+      
+      console.log('📦 Creating backup:', { fileName, size: backupStr.length, notesCount: backupData.notes.length });
 
       if (Platform.OS === 'web') {
         const blob = new Blob([backupStr], { type: 'application/json' });
@@ -63,29 +95,38 @@ const SettingsScreen = ({
       const path = RNFS.DocumentDirectoryPath + '/' + fileName;
       await RNFS.writeFile(path, backupStr, 'utf8');
       
-      // Показываем диалог для сохранения/отправки
-      Alert.alert(
-        '✅ Резервная копия создана',
-        `Файл сохранен: ${path}\n\nСкопируйте этот путь или поделитесь файлом`,
-        [
-          { text: 'OK', style: 'cancel' },
-          { 
-            text: 'Поделиться', 
-            onPress: async () => {
-              try {
-                await Share.share({
-                  title: 'Резервная копия FamNotes',
-                  url: `file://${path}`,
-                  message: `Резервная копия FamNotes от ${new Date().toLocaleString()}`
-                });
-              } catch (e) {
-                console.log(e);
+      // Проверяем, что файл создан
+      const fileExists = await RNFS.exists(path);
+      if (fileExists) {
+        const fileInfo = await RNFS.stat(path);
+        console.log('✅ Backup created:', { path, size: fileInfo.size });
+        
+        Alert.alert(
+          '✅ Резервная копия создана',
+          `Файл: ${fileName}\nРазмер: ${(fileInfo.size / 1024).toFixed(2)} KB\n\nСкопируйте этот файл на другое устройство для восстановления.`,
+          [
+            { text: 'OK', style: 'cancel' },
+            { 
+              text: 'Поделиться', 
+              onPress: async () => {
+                try {
+                  await Share.share({
+                    title: 'Резервная копия FamNotes',
+                    url: `file://${path}`,
+                    message: `Резервная копия заметок от ${new Date().toLocaleString()}`
+                  });
+                } catch (e) {
+                  console.log('Share error:', e);
+                }
               }
             }
-          }
-        ]
-      );
+          ]
+        );
+      } else {
+        throw new Error('Файл не был создан');
+      }
     } catch (e) {
+      console.error('Backup error:', e);
       Alert.alert('❌ Ошибка', 'Не удалось создать резервную копию: ' + e.message);
     }
   };
@@ -98,30 +139,85 @@ const SettingsScreen = ({
       
       if (result && result[0]) {
         const fileUri = result[0].uri;
-        const content = await RNFS.readFile(fileUri, 'utf8');
+        const fileName = result[0].name;
+        console.log('📂 Selected file:', { fileName, uri: fileUri });
+        
+        let content;
+        
+        if (Platform.OS === 'web') {
+          const response = await fetch(fileUri);
+          content = await response.text();
+        } else {
+          content = await RNFS.readFile(fileUri, 'utf8');
+        }
+        
+        console.log('📄 File content length:', content.length);
+        
         const backup = JSON.parse(content);
         
-        if (backup.notes && backup.folders) {
-          Alert.alert(
-            'Восстановление',
-            'Все данные будут заменены. Продолжить?',
-            [
-              { text: 'Отмена', style: 'cancel' },
-              { 
-                text: 'Восстановить', 
-                onPress: async () => {
-                  // Здесь нужно вызвать функции сохранения из пропсов
-                  Alert.alert('✅ Успех', 'Данные восстановлены. Перезапустите приложение.');
+        // Проверяем структуру бэкапа
+        if (!backup.notes || !backup.folders) {
+          throw new Error('Неверный формат файла. Файл должен содержать notes и folders.');
+        }
+        
+        console.log('📊 Backup structure:', {
+          notesCount: backup.notes.length,
+          foldersCount: backup.folders.length,
+          hasSettings: !!backup.settings
+        });
+        
+        Alert.alert(
+          'Восстановление данных',
+          `Найдено ${backup.notes.length} заметок и ${backup.folders.length} папок. Все текущие данные будут заменены. Продолжить?`,
+          [
+            { text: 'Отмена', style: 'cancel' },
+            { 
+              text: 'Восстановить', 
+              onPress: async () => {
+                try {
+                  // Нормализуем заметки
+                  const normalizedNotes = backup.notes.map(note => ({
+                    ...note,
+                    color: note.color || brandColor,
+                    deleted: note.deleted || false,
+                    pinned: note.pinned || false,
+                    locked: note.locked || false,
+                    updatedAt: note.updatedAt || Date.now(),
+                    createdAt: note.createdAt || Date.now()
+                  }));
+                  
+                  // Нормализуем папки
+                  const normalizedFolders = backup.folders.map(folder => {
+                    if (typeof folder === 'object' && folder.name) {
+                      return folder;
+                    }
+                    return folder;
+                  });
+                  
+                  // Обновляем данные
+                  await RNFS.writeFile(
+                    RNFS.DocumentDirectoryPath + '/restore_temp.json',
+                    JSON.stringify({ notes: normalizedNotes, folders: normalizedFolders, settings: backup.settings }),
+                    'utf8'
+                  );
+                  
+                  Alert.alert(
+                    '✅ Успех', 
+                    'Данные восстановлены. Перезапустите приложение для применения изменений.',
+                    [{ text: 'OK', onPress: () => setCurrentScreen('notes') }]
+                  );
+                } catch (restoreError) {
+                  console.error('Restore save error:', restoreError);
+                  Alert.alert('❌ Ошибка', 'Не удалось сохранить восстановленные данные: ' + restoreError.message);
                 }
               }
-            ]
-          );
-        } else {
-          throw new Error('Неверный формат файла');
-        }
+            }
+          ]
+        );
       }
     } catch (e) {
       if (e.code !== 'DOCUMENT_PICKER_CANCELED') {
+        console.error('Restore error:', e);
         Alert.alert('❌ Ошибка', 'Не удалось восстановить данные: ' + e.message);
       }
     }
@@ -231,7 +327,7 @@ const SettingsScreen = ({
               }} 
               onPress={handleBackup}
             >
-              <Icon name="backup" size={24} color="white" style={{ marginRight: 8 }} />
+              <Text style={{ fontSize: 20, marginRight: 8 }}>💾</Text>
               <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Создать копию</Text>
             </TouchableOpacity>
             
@@ -246,7 +342,7 @@ const SettingsScreen = ({
               }} 
               onPress={handleRestore}
             >
-              <Icon name="restore" size={24} color="white" style={{ marginRight: 8 }} />
+              <Text style={{ fontSize: 20, marginRight: 8 }}>↩️</Text>
               <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Восстановить</Text>
             </TouchableOpacity>
           </View>
@@ -260,7 +356,7 @@ const SettingsScreen = ({
               FamNotes v1.0.0
             </Text>
             <Text style={{ color: '#999', textAlign: 'center', marginTop: 8, fontSize: 12 }}>
-              Простое приложение для заметок
+              Приложение для заметок
             </Text>
           </View>
         </View>
