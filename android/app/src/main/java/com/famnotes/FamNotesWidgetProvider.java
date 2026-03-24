@@ -25,12 +25,11 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
         for (int appWidgetId : appWidgetIds) {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
             
-            // Добавляем открытие приложения при нажатии на виджет
+            // Открытие приложения при нажатии
             Intent intent = new Intent(context, MainActivity.class);
             intent.setAction(Intent.ACTION_MAIN);
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            intent.setData(Uri.parse("famnotes://widget"));
             
             android.app.PendingIntent pendingIntent = android.app.PendingIntent.getActivity(
                 context, 
@@ -61,8 +60,11 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
                             notesText.append("• ").append(content);
                         }
                         
+                        // Разделитель между заметками (серая тонкая линия)
                         if (i < notesArray.length() - 1) {
-                            notesText.append("\n\n");
+                            notesText.append("\n");
+                            notesText.append("─".repeat(20));
+                            notesText.append("\n");
                         }
                     }
                 }
