@@ -98,8 +98,12 @@ const EditNoteScreen = ({
   };
 
   const handleEditPress = () => {
+    // Если заметка в корзине, не переходим в режим редактирования
+    if (isInTrash) {
+      Alert.alert('Заметка в корзине', 'Заметки в корзине можно только просматривать и восстанавливать');
+      return;
+    }
     setIsEditing(true);
-    // Устанавливаем курсор в начало текста заметки и открываем клавиатуру
     setTimeout(() => {
       if (contentInputRef.current) {
         contentInputRef.current.focus();
@@ -111,6 +115,11 @@ const EditNoteScreen = ({
   };
 
   const handleColorSelect = (color) => {
+    // Если заметка в корзине, не меняем цвет
+    if (isInTrash) {
+      Alert.alert('Заметка в корзине', 'Заметки в корзине нельзя редактировать');
+      return;
+    }
     setNote({ ...note, color, updatedAt: Date.now() });
     if (!isEditing && !isInTrash) {
       setIsEditing(true);
@@ -132,7 +141,7 @@ const EditNoteScreen = ({
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <Header 
-        title={isEditing ? "Редактирование" : "Просмотр"}
+        title={isInTrash ? "Просмотр (Корзина)" : (isEditing ? "Редактирование" : "Просмотр")}
         showSearch={false} 
         brandColor={note.color || brandColor}
       >
@@ -140,9 +149,11 @@ const EditNoteScreen = ({
           <Icon name="share" size={24} color="white" />
         </TouchableOpacity>
         
-        <TouchableOpacity onPress={() => setShowColor(true)}>
-          <Icon name="palette" size={24} color="white" />
-        </TouchableOpacity>
+        {!isInTrash && (
+          <TouchableOpacity onPress={() => setShowColor(true)}>
+            <Icon name="palette" size={24} color="white" />
+          </TouchableOpacity>
+        )}
         
         <TouchableOpacity onPress={handleDelete}>
           <Icon name="delete" size={24} color="white" />
@@ -156,7 +167,7 @@ const EditNoteScreen = ({
         keyboardShouldPersistTaps="handled"
       >
         <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
-          {isEditing ? (
+          {isEditing && !isInTrash ? (
             <TextInput 
               ref={titleInputRef}
               style={{ fontSize: settings.fontSize + 2, fontWeight: 'bold', paddingVertical: 8, color: '#333' }} 
@@ -175,7 +186,7 @@ const EditNoteScreen = ({
           <View style={{ height: 2, backgroundColor: note.color || brandColor, width: '100%', marginTop: 4 }} />
         </View>
 
-        {isEditing ? (
+        {isEditing && !isInTrash ? (
           <TextInput 
             ref={contentInputRef}
             style={{ fontSize: settings.fontSize, paddingHorizontal: 16, paddingVertical: 12, textAlignVertical: 'top', color: '#333', minHeight: 200, lineHeight: settings.fontSize * 1.5 }} 
@@ -198,24 +209,27 @@ const EditNoteScreen = ({
         )}
       </ScrollView>
 
-      <TouchableOpacity 
-        style={{ 
-          position: 'absolute', 
-          bottom: insets.bottom + 24, 
-          right: 24, 
-          width: 70, 
-          height: 70, 
-          borderRadius: 35, 
-          backgroundColor: note.color || brandColor, 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          elevation: 5, 
-          zIndex: 1000
-        }} 
-        onPress={isEditing ? handleSave : handleEditPress}
-      >
-        <Icon name={isEditing ? "check" : "edit"} size={36} color="white" />
-      </TouchableOpacity>
+      {/* Кнопка редактирования/сохранения - не показываем для заметок в корзине */}
+      {!isInTrash && (
+        <TouchableOpacity 
+          style={{ 
+            position: 'absolute', 
+            bottom: insets.bottom + 24, 
+            right: 24, 
+            width: 70, 
+            height: 70, 
+            borderRadius: 35, 
+            backgroundColor: note.color || brandColor, 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            elevation: 5, 
+            zIndex: 1000
+          }} 
+          onPress={isEditing ? handleSave : handleEditPress}
+        >
+          <Icon name={isEditing ? "check" : "edit"} size={36} color="white" />
+        </TouchableOpacity>
+      )}
 
       <ColorPickerModal 
         visible={showColor} 
