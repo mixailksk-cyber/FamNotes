@@ -27,14 +27,12 @@ const AppContent = () => {
   // Обработка кнопки "Назад" на Android
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      // Если открыт диалог - закрываем его
       if (showNoteDialog) {
         setShowNoteDialog(false);
         setSelectedNoteForAction(null);
         return true;
       }
       
-      // Если на экране редактирования и пришли из поиска
       if (currentScreen === 'edit' && navigationStack[navigationStack.length - 1] === 'search') {
         setCurrentScreen('search');
         setSelectedNote(null);
@@ -42,7 +40,6 @@ const AppContent = () => {
         return true;
       }
       
-      // Если на экране редактирования
       if (currentScreen === 'edit') {
         setCurrentScreen('notes');
         setSelectedNote(null);
@@ -50,7 +47,6 @@ const AppContent = () => {
         return true;
       }
       
-      // Если на экране поиска
       if (currentScreen === 'search') {
         setCurrentScreen('notes');
         setSearchQuery('');
@@ -58,27 +54,23 @@ const AppContent = () => {
         return true;
       }
       
-      // Если на экране папок
       if (currentScreen === 'folders') {
         setCurrentScreen('notes');
         setNavigationStack(prev => prev.slice(0, -1));
         return true;
       }
       
-      // Если на экране настроек
       if (currentScreen === 'settings') {
         setCurrentScreen('notes');
         setNavigationStack(prev => prev.slice(0, -1));
         return true;
       }
       
-      // Если на экране заметок, но не в Главной папке
       if (currentScreen === 'notes' && currentFolder !== 'Главная') {
         setCurrentFolder('Главная');
         return true;
       }
       
-      // Если на главном экране с папкой Главная - закрываем приложение
       return false;
     });
     
@@ -170,7 +162,8 @@ const AppContent = () => {
     saveNotes(updatedNotes);
     
     if (time) {
-      Alert.alert('✅ Напоминание установлено', `Напоминание установлено на ${new Date(time).toLocaleString()}`);
+      const date = new Date(time);
+      Alert.alert('✅ Напоминание установлено', `Напоминание установлено на ${date.toLocaleString()}`);
     } else {
       Alert.alert('🗑 Напоминание отменено', 'Напоминание для этой заметки отменено');
     }
@@ -252,6 +245,8 @@ const AppContent = () => {
           setNavigationStack(prev => [...prev, 'notes']);
           setCurrentScreen('search');
         }}
+        showFolders={true}
+        onFoldersPress={() => setCurrentScreen('folders')}
         brandColor={brandColor}
       >
         {isInTrash && sortedNotes.length > 0 && (
@@ -329,7 +324,6 @@ const AppContent = () => {
           setSelectedNoteForAction(null);
         }} 
         onDelete={() => {
-          // Переместить в корзину (для обычных заметок)
           if (!isInTrashFolder) {
             const updatedNote = { ...selectedNoteForAction, folder: 'Корзина', deleted: true, pinned: false, updatedAt: Date.now() };
             const index = notes.findIndex(n => n.id === selectedNoteForAction.id);
@@ -340,7 +334,6 @@ const AppContent = () => {
           setSelectedNoteForAction(null);
         }} 
         onPermanentDelete={() => {
-          // Удалить безвозвратно
           const updatedNotes = notes.filter(n => n.id !== selectedNoteForAction.id);
           saveNotes(updatedNotes);
           setShowNoteDialog(false);
