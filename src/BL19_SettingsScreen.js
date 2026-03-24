@@ -98,7 +98,6 @@ const SettingsScreen = ({
         return;
       }
 
-      // Для Android используем RNFS - сохраняем в Downloads
       const downloadsPath = RNFS.DownloadDirectoryPath;
       const path = downloadsPath + '/' + fileName;
       
@@ -258,8 +257,6 @@ const SettingsScreen = ({
     <View style={{ flex: 1, backgroundColor: 'white' }}>
       <Header 
         title="Настройки" 
-        showBack 
-        onBack={() => setCurrentScreen('notes')} 
         rightIcon="close" 
         onRightPress={() => setCurrentScreen('notes')} 
         showSearch={false} 
