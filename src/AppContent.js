@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, FlatList, Text, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getBrandColor } from './BL02_Constants';
 import Header from './BL04_Header';
 import NoteItem from './BL09_NoteItem';
@@ -11,9 +10,6 @@ import EditNoteScreen from './BL17_EditNoteScreen';
 import SearchScreen from './BL20_SearchScreen';
 import NoteActionDialog from './BL07_NoteActionDialog';
 import { useNotesData } from './BL12_DataHooks';
-
-// Принудительная загрузка иконок
-Icon.loadFont();
 
 const AppContent = () => {
   const insets = useSafeAreaInsets();
@@ -26,6 +22,7 @@ const AppContent = () => {
   
   const { notes, folders, settings, saveNotes, saveFolders, saveSettings } = useNotesData();
   
+  // Фильтруем заметки по текущей папке
   const filteredNotes = React.useMemo(() => {
     if (currentFolder === 'Корзина') {
       return notes.filter(n => n.deleted === true);
@@ -33,6 +30,7 @@ const AppContent = () => {
     return notes.filter(n => n.folder === currentFolder && !n.deleted);
   }, [notes, currentFolder]);
   
+  // Сортируем заметки
   const sortedNotes = React.useMemo(() => {
     return [...filteredNotes].sort((a, b) => {
       if (a.pinned && !b.pinned) return -1;
@@ -44,6 +42,7 @@ const AppContent = () => {
   const brandColor = getBrandColor(settings);
   const isInTrash = currentFolder === 'Корзина';
   
+  // Создание новой заметки
   const handleAddNote = () => {
     const newNote = {
       id: Date.now().toString(),
@@ -61,6 +60,7 @@ const AppContent = () => {
     setCurrentScreen('edit');
   };
   
+  // Сохранение заметки
   const handleSaveNote = (updatedNote) => {
     if (Array.isArray(updatedNote)) {
       saveNotes(updatedNote);
@@ -79,11 +79,12 @@ const AppContent = () => {
     setSelectedNote(null);
   };
   
+  // Перемещение заметки в другую папку
   const handleMoveNote = (note, targetFolder) => {
     const updatedNote = { 
       ...note, 
       folder: targetFolder, 
-      deleted: targetFolder === 'Корзина' ? true : false,
+      deleted: false,
       updatedAt: Date.now() 
     };
     const index = notes.findIndex(n => n.id === note.id);
@@ -91,16 +92,27 @@ const AppContent = () => {
     saveNotes(newNotes);
   };
   
+  // Восстановление из корзины
+  const handleRestoreFromTrash = (note) => {
+    const updatedNote = { ...note, folder: 'Главная', deleted: false, updatedAt: Date.now() };
+    const index = notes.findIndex(n => n.id === note.id);
+    const newNotes = [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)];
+    saveNotes(newNotes);
+  };
+  
+  // Закрепление/открепление
   const handleTogglePin = (noteId) => {
     const updatedNotes = notes.map(n => n.id === noteId ? { ...n, pinned: !n.pinned, updatedAt: Date.now() } : n);
     saveNotes(updatedNotes);
   };
   
+  // Блокировка/разблокировка
   const handleToggleLock = (noteId) => {
     const updatedNotes = notes.map(n => n.id === noteId ? { ...n, locked: !n.locked, updatedAt: Date.now() } : n);
     saveNotes(updatedNotes);
   };
   
+  // Очистка корзины
   const handleEmptyTrash = () => {
     Alert.alert(
       'Очистить корзину',
@@ -119,6 +131,7 @@ const AppContent = () => {
     );
   };
   
+  // Обработчики для экрана папок
   const handleRenameFolder = (oldName, newName) => {
     const updatedFolders = folders.map(f => {
       if (typeof f === 'object' && f.name === oldName) return { ...f, name: newName };
@@ -134,31 +147,18 @@ const AppContent = () => {
   };
   
   const handleDeleteFolder = (folderName) => {
-    Alert.alert(
-      'Удалить папку',
-      `Все заметки из папки "${folderName}" будут перемещены в корзину. Продолжить?`,
-      [
-        { text: 'Отмена', style: 'cancel' },
-        { 
-          text: 'Удалить', 
-          style: 'destructive',
-          onPress: () => {
-            const updatedNotes = notes.map(note =>
-              note.folder === folderName
-                ? { ...note, folder: 'Корзина', deleted: true, updatedAt: Date.now() }
-                : note
-            );
-            const updatedFolders = folders.filter(f => {
-              const name = typeof f === 'object' ? f.name : f;
-              return name !== folderName;
-            });
-            saveNotes(updatedNotes);
-            saveFolders(updatedFolders);
-            if (currentFolder === folderName) setCurrentFolder('Главная');
-          }
-        }
-      ]
+    const updatedNotes = notes.map(note =>
+      note.folder === folderName
+        ? { ...note, folder: 'Корзина', deleted: true, updatedAt: Date.now() }
+        : note
     );
+    const updatedFolders = folders.filter(f => {
+      const name = typeof f === 'object' ? f.name : f;
+      return name !== folderName;
+    });
+    saveNotes(updatedNotes);
+    saveFolders(updatedFolders);
+    if (currentFolder === folderName) setCurrentFolder('Главная');
   };
   
   const handleColorChange = (folderName, newColor) => {
@@ -174,6 +174,7 @@ const AppContent = () => {
     saveFolders(updatedFolders);
   };
   
+  // Экран списка заметок
   const NotesListScreen = () => (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
       <Header 
@@ -191,7 +192,7 @@ const AppContent = () => {
       >
         {isInTrash && sortedNotes.length > 0 && (
           <TouchableOpacity onPress={handleEmptyTrash} style={{ marginRight: 20 }}>
-            <Icon name="delete-sweep" size={24} color="white" />
+            <Text style={{ fontSize: 20, color: 'white' }}>🧹</Text>
           </TouchableOpacity>
         )}
       </Header>
@@ -207,6 +208,7 @@ const AppContent = () => {
               setCurrentScreen('edit');
             }} 
             onLongPress={() => {
+              console.log('Long press on note:', item.id);
               setSelectedNoteForAction(item);
               setShowNoteDialog(true);
             }} 
@@ -234,19 +236,16 @@ const AppContent = () => {
             backgroundColor: brandColor, 
             justifyContent: 'center', 
             alignItems: 'center', 
-            elevation: 5,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84
+            elevation: 5 
           }} 
           onPress={handleAddNote}>
-          <Icon name="add" size={36} color="white" />
+          <Text style={{ fontSize: 36, color: 'white' }}>+</Text>
         </TouchableOpacity>
       )}
     </View>
   );
   
+  // Рендерим нужный экран
   switch (currentScreen) {
     case 'notes':
       return <NotesListScreen />;
@@ -275,14 +274,6 @@ const AppContent = () => {
           handleRenameFolder={handleRenameFolder}
           handleDeleteFolder={handleDeleteFolder}
           handleColorChange={handleColorChange}
-          showFolderDialog={false}
-          setShowFolderDialog={() => {}}
-          showFolderSettings={false}
-          setShowFolderSettings={() => {}}
-          selectedFolderForSettings={null}
-          setSelectedFolderForSettings={() => {}}
-          selectedFolderColor={null}
-          setSelectedFolderColor={() => {}}
         />
       );
     case 'edit':
@@ -316,6 +307,54 @@ const AppContent = () => {
     default:
       return <NotesListScreen />;
   }
+  
+  // Диалог действий с заметкой
+  return (
+    <>
+      {/* Основной контент рендерится через switch выше */}
+      {selectedNoteForAction && (
+        <NoteActionDialog 
+          visible={showNoteDialog} 
+          onClose={() => { setShowNoteDialog(false); setSelectedNoteForAction(null); }} 
+          folders={folders} 
+          currentFolder={selectedNoteForAction?.folder || currentFolder} 
+          onMove={(targetFolder) => {
+            if (selectedNoteForAction.folder === 'Корзина') {
+              handleRestoreFromTrash(selectedNoteForAction);
+            } else {
+              handleMoveNote(selectedNoteForAction, targetFolder);
+            }
+            setShowNoteDialog(false);
+            setSelectedNoteForAction(null);
+          }} 
+          onDelete={() => {
+            if (selectedNoteForAction.folder === 'Корзина') {
+              const updatedNotes = notes.filter(n => n.id !== selectedNoteForAction.id);
+              saveNotes(updatedNotes);
+            } else {
+              const updatedNote = { ...selectedNoteForAction, folder: 'Корзина', deleted: true, pinned: false, updatedAt: Date.now() };
+              const index = notes.findIndex(n => n.id === selectedNoteForAction.id);
+              const newNotes = [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)];
+              saveNotes(newNotes);
+            }
+            setShowNoteDialog(false);
+            setSelectedNoteForAction(null);
+          }} 
+          onPermanentDelete={() => {
+            const updatedNotes = notes.filter(n => n.id !== selectedNoteForAction.id);
+            saveNotes(updatedNotes);
+            setShowNoteDialog(false);
+            setSelectedNoteForAction(null);
+          }} 
+          onTogglePin={() => handleTogglePin(selectedNoteForAction.id)}
+          onToggleLock={() => handleToggleLock(selectedNoteForAction.id)}
+          isPinned={selectedNoteForAction?.pinned || false}
+          isLocked={selectedNoteForAction?.locked || false}
+          settings={settings} 
+        />
+      )}
+    </>
+  );
 };
 
 export default AppContent;
