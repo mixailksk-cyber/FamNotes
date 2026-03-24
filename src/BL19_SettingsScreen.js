@@ -31,16 +31,6 @@ const SettingsScreen = ({
     if (onBrandColorChange) onBrandColorChange(color);
   };
 
-  const getStats = () => {
-    const totalNotes = notes.filter(n => !n.deleted).length;
-    const trashedNotes = notes.filter(n => n.deleted).length;
-    const foldersCount = folders.filter(f => {
-      const name = typeof f === 'object' ? f.name : f;
-      return name !== 'Корзина';
-    }).length;
-    return { totalNotes, trashedNotes, foldersCount };
-  };
-
   const formatDateForFilename = () => {
     const date = new Date();
     const day = date.getDate();
@@ -109,7 +99,7 @@ const SettingsScreen = ({
         
         Alert.alert(
           '✅ Резервная копия создана',
-          `Файл: ${fileName}\nРазмер: ${(fileInfo.size / 1024).toFixed(2)} KB\n\nСохранено в папку "Downloads"`,
+          `Файл: ${fileName}\nРазмер: ${(fileInfo.size / 1024).toFixed(2)} KB`,
           [
             { 
               text: 'OK', 
@@ -251,8 +241,6 @@ const SettingsScreen = ({
     }
   };
 
-  const stats = getStats();
-
   return (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
       <Header 
@@ -264,24 +252,7 @@ const SettingsScreen = ({
       />
       
       <ScrollView style={{ flex: 1, padding: 20 }}>
-        <View style={{ marginBottom: 32 }}>
-          <Text style={{ fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 16 }}>Статистика</Text>
-          <View style={{ backgroundColor: '#F8F9FA', borderRadius: 16, padding: 20 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ color: '#666' }}>Всего заметок:</Text>
-              <Text style={{ color: '#333', fontWeight: 'bold' }}>{stats.totalNotes}</Text>
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ color: '#666' }}>В корзине:</Text>
-              <Text style={{ color: '#FF6B6B', fontWeight: 'bold' }}>{stats.trashedNotes}</Text>
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ color: '#666' }}>Папок:</Text>
-              <Text style={{ color: '#333', fontWeight: 'bold' }}>{stats.foldersCount}</Text>
-            </View>
-          </View>
-        </View>
-
+        {/* Размер текста */}
         <View style={{ marginBottom: 32 }}>
           <Text style={{ fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 16 }}>Размер текста</Text>
           <View style={{ backgroundColor: '#F8F9FA', borderRadius: 16, padding: 20 }}>
@@ -310,6 +281,7 @@ const SettingsScreen = ({
           </View>
         </View>
 
+        {/* Цвет бренда */}
         <View style={{ marginBottom: 32 }}>
           <Text style={{ fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 16 }}>Цвет бренда</Text>
           <View style={{ backgroundColor: '#F8F9FA', borderRadius: 16, padding: 20 }}>
@@ -333,6 +305,7 @@ const SettingsScreen = ({
           </View>
         </View>
 
+        {/* Резервное копирование */}
         <View style={{ marginBottom: 32 }}>
           <Text style={{ fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 16 }}>Резервное копирование</Text>
           <View style={{ backgroundColor: '#F8F9FA', borderRadius: 16, padding: 20, gap: 12 }}>
@@ -380,11 +353,9 @@ const SettingsScreen = ({
               )}
             </TouchableOpacity>
           </View>
-          <Text style={{ color: '#999', fontSize: 12, marginTop: 8, textAlign: 'center' }}>
-            Копия сохраняется в папку "Downloads"
-          </Text>
         </View>
 
+        {/* О приложении */}
         <View style={{ marginBottom: 32 }}>
           <Text style={{ fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 16 }}>О приложении</Text>
           <View style={{ backgroundColor: '#F8F9FA', borderRadius: 16, padding: 20 }}>
