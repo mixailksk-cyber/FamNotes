@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Modal, Animated, Platform, Alert, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Animated, Platform, Alert, ScrollView, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { width, getBrandColor } from './BL02_Constants';
+
+const { height: screenHeight } = Dimensions.get('window');
 
 const NoteActionDialog = ({ 
   visible, 
@@ -52,6 +54,9 @@ const NoteActionDialog = ({
   }, [visible]);
   
   const brandColor = getBrandColor(settings);
+  
+  // Вычисляем, нужно ли показывать скролл
+  const needScroll = availableFolders.length > 4;
   
   const formatReminderTime = (timestamp) => {
     if (!timestamp) return null;
@@ -152,6 +157,9 @@ const NoteActionDialog = ({
   
   if (!visible) return null;
   
+  // Расчет максимальной высоты диалога
+  const maxDialogHeight = screenHeight * 0.75;
+  
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <Animated.View style={{ 
@@ -166,7 +174,7 @@ const NoteActionDialog = ({
           padding: 20, 
           borderRadius: 10, 
           width: width - 40,
-          maxHeight: '85%',
+          maxHeight: maxDialogHeight,
           transform: [{ scale: scaleAnim }]
         }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, textAlign: 'center', color: brandColor }}>
@@ -226,21 +234,35 @@ const NoteActionDialog = ({
             </TouchableOpacity>
           )}
           
-          {/* Перемещение в папки (для всех заметок, включая корзину) */}
+          {/* Перемещение в папки - скролл только если много папок */}
           {availableFolders.length > 0 && (
             <>
               <Text style={{ marginBottom: 8, color: '#666', marginTop: 8 }}>Переместить в папку:</Text>
-              <ScrollView style={{ maxHeight: 200 }}>
-                {availableFolders.map((n, i) => (
-                  <TouchableOpacity 
-                    key={i} 
-                    onPress={() => { onMove(n); onClose(); }} 
-                    style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#E0E0E0', flexDirection: 'row', alignItems: 'center' }}>
-                    <Icon name="folder" size={20} color="#666" style={{ marginRight: 12 }} />
-                    <Text style={{ fontSize: 16, color: '#333' }}>{n}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              {needScroll ? (
+                <ScrollView style={{ maxHeight: 200 }}>
+                  {availableFolders.map((n, i) => (
+                    <TouchableOpacity 
+                      key={i} 
+                      onPress={() => { onMove(n); onClose(); }} 
+                      style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#E0E0E0', flexDirection: 'row', alignItems: 'center' }}>
+                      <Icon name="folder" size={20} color="#666" style={{ marginRight: 12 }} />
+                      <Text style={{ fontSize: 16, color: '#333' }}>{n}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              ) : (
+                <View>
+                  {availableFolders.map((n, i) => (
+                    <TouchableOpacity 
+                      key={i} 
+                      onPress={() => { onMove(n); onClose(); }} 
+                      style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#E0E0E0', flexDirection: 'row', alignItems: 'center' }}>
+                      <Icon name="folder" size={20} color="#666" style={{ marginRight: 12 }} />
+                      <Text style={{ fontSize: 16, color: '#333' }}>{n}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </>
           )}
           
@@ -277,7 +299,7 @@ const NoteActionDialog = ({
             </View>
           )}
           
-          {/* Кнопка "Удалить безвозвратно" для корзины (без кнопки восстановить) */}
+          {/* Кнопка "Удалить безвозвратно" для корзины */}
           {isInTrash && (
             <TouchableOpacity 
               onPress={() => { onPermanentDelete(); onClose(); }} 
