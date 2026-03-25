@@ -34,6 +34,11 @@ const Header = ({
       alignItems: 'center' 
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+        {showFolders && (
+          <TouchableOpacity onPress={onFoldersPress} style={{ marginRight: 16 }}>
+            <Icon name="folder" size={24} color="white" />
+          </TouchableOpacity>
+        )}
         <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 20, flex: 1 }} numberOfLines={1}>
           {title}
         </Text>
@@ -45,12 +50,6 @@ const Header = ({
             {child}
           </View>
         ))}
-        
-        {showFolders && (
-          <TouchableOpacity onPress={onFoldersPress}>
-            <Icon name="folder" size={24} color="white" />
-          </TouchableOpacity>
-        )}
         
         {showSearch && (
           <TouchableOpacity onPress={onSearchPress}>
