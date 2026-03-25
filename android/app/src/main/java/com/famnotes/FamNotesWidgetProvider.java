@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.text.Html;
 import android.text.TextUtils;
 import android.widget.RemoteViews;
 
@@ -53,27 +54,33 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
                         String title = note.optString("title", "");
                         String content = note.optString("content", "");
                         
-                        // Формируем строку заметки
+                        // Формируем HTML строку с жирным заголовком
                         if (!TextUtils.isEmpty(title) && !TextUtils.isEmpty(content)) {
                             String shortContent = content.length() > 40 ? content.substring(0, 40) + "..." : content;
-                            notesText.append("• ").append(title).append("\n  ").append(shortContent);
+                            notesText.append("<b>").append(title).append("</b><br/>");
+                            notesText.append(shortContent);
                         } else if (!TextUtils.isEmpty(title)) {
-                            notesText.append("• ").append(title);
+                            notesText.append("<b>").append(title).append("</b>");
                         } else if (!TextUtils.isEmpty(content)) {
                             String shortContent = content.length() > 45 ? content.substring(0, 45) + "..." : content;
-                            notesText.append("• ").append(shortContent);
+                            notesText.append(shortContent);
                         } else {
-                            notesText.append("• Без названия");
+                            notesText.append("Без названия");
                         }
                         
                         // Добавляем разделитель (кроме последней заметки)
                         if (i < notesArray.length() - 1) {
-                            notesText.append("\n\n");
+                            notesText.append("<br/><br/><hr color='#33FFFFFF'/><br/>");
                         }
                     }
                 }
                 
-                views.setTextViewText(R.id.widget_notes_list, notesText.toString());
+                // Используем Html.fromHtml для форматирования
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    views.setTextViewText(R.id.widget_notes_list, Html.fromHtml(notesText.toString(), Html.FROM_HTML_MODE_LEGACY));
+                } else {
+                    views.setTextViewText(R.id.widget_notes_list, Html.fromHtml(notesText.toString()));
+                }
                 
             } catch (JSONException e) {
                 views.setTextViewText(R.id.widget_notes_list, "Ошибка загрузки");
