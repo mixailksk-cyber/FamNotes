@@ -97,7 +97,17 @@ const EditNoteScreen = ({
     }
     setIsEditing(true);
     setTimeout(() => {
-      if (contentInputRef.current) {
+      // Ставим курсор в конец заголовка
+      if (titleInputRef.current && note.title) {
+        titleInputRef.current.focus();
+        titleInputRef.current.setNativeProps({
+          selection: { start: note.title.length, end: note.title.length }
+        });
+      } else if (titleInputRef.current) {
+        titleInputRef.current.focus();
+      }
+      // Если заголовок пустой, то фокус на текст заметки в начало
+      if (!note.title && contentInputRef.current) {
         contentInputRef.current.focus();
         contentInputRef.current.setNativeProps({
           selection: { start: 0, end: 0 }
@@ -115,7 +125,16 @@ const EditNoteScreen = ({
     if (!isEditing && !isInTrash) {
       setIsEditing(true);
       setTimeout(() => {
-        if (contentInputRef.current) {
+        // Ставим курсор в конец заголовка после выбора цвета
+        if (titleInputRef.current && note.title) {
+          titleInputRef.current.focus();
+          titleInputRef.current.setNativeProps({
+            selection: { start: note.title.length, end: note.title.length }
+          });
+        } else if (titleInputRef.current) {
+          titleInputRef.current.focus();
+        }
+        if (!note.title && contentInputRef.current) {
           contentInputRef.current.focus();
           contentInputRef.current.setNativeProps({
             selection: { start: 0, end: 0 }
