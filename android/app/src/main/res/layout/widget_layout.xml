@@ -1,27 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_container"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#80000000"
-    android:padding="12dp">
+    android:padding="8dp">
 
-    <LinearLayout
-        android:id="@+id/widget_notes_container"
+    <ScrollView
+        android:id="@+id/widget_scroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:scrollbars="vertical"
+        android:fillViewport="true">
 
-        <TextView
-            android:id="@+id/widget_notes_list"
+        <LinearLayout
+            android:id="@+id/widget_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Загрузка..."
-            android:textColor="#FFFFFF"
-            android:textSize="12sp"
-            android:lineSpacingExtra="4dp" />
+            android:orientation="vertical"
+            android:padding="8dp">
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/widget_notes_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Загрузка..."
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:lineSpacingExtra="4dp" />
 
-</LinearLayout>
+        </LinearLayout>
+
+    </ScrollView>
+
+</FrameLayout>
