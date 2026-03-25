@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FFFFFF"
+    android:background="#CC000000"
     android:padding="12dp">
 
     <LinearLayout
@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="FamNotes"
-            android:textColor="#20A0A0"
+            android:textColor="#FFFFFF"
             android:textSize="16sp"
             android:textStyle="bold" />
 
@@ -28,9 +28,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="0"
-            android:textColor="#666"
+            android:textColor="#CCCCCC"
             android:textSize="12sp"
-            android:background="#F5F5F5"
+            android:background="#33FFFFFF"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
             android:paddingTop="2dp"
@@ -45,7 +45,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Загрузка..."
-        android:textColor="#333"
+        android:textColor="#FFFFFF"
         android:textSize="13sp"
         android:lineSpacingExtra="4dp"
         android:minHeight="80dp" />
@@ -54,7 +54,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Нажмите для открытия"
-        android:textColor="#999"
+        android:textColor="#CCCCCC"
         android:textSize="10sp"
         android:gravity="center"
         android:layout_marginTop="8dp" />
