@@ -24,7 +24,6 @@ const AppContent = () => {
   
   const { notes, folders, settings, saveNotes, saveFolders, saveSettings, loadData } = useNotesData();
 
-  // Обработка кнопки "Назад" на Android
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       if (showNoteDialog) {
@@ -169,6 +168,18 @@ const AppContent = () => {
     }
   };
   
+  const handleQuickDelete = (note) => {
+    if (note.folder === 'Корзина') {
+      const updatedNotes = notes.filter(n => n.id !== note.id);
+      saveNotes(updatedNotes);
+    } else {
+      const updatedNote = { ...note, folder: 'Корзина', deleted: true, pinned: false, updatedAt: Date.now() };
+      const index = notes.findIndex(n => n.id === note.id);
+      const newNotes = [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)];
+      saveNotes(newNotes);
+    }
+  };
+  
   const handleEmptyTrash = () => {
     Alert.alert(
       'Очистить корзину',
@@ -234,6 +245,11 @@ const AppContent = () => {
     setShowNoteDialog(true);
   };
   
+  const handleNoteOpen = (note) => {
+    setSelectedNote(note);
+    setCurrentScreen('edit');
+  };
+  
   const NotesListScreen = () => (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
       <Header 
@@ -262,15 +278,7 @@ const AppContent = () => {
         renderItem={({ item }) => (
           <NoteItem 
             item={item} 
-            onPress={() => {
-              // Если заметка в корзине, не открываем редактирование
-              if (item.folder === 'Корзина' || item.deleted === true) {
-                handleLongPressOnNote(item);
-              } else {
-                setSelectedNote(item);
-                setCurrentScreen('edit');
-              }
-            }} 
+            onPress={() => handleNoteOpen(item)} 
             onLongPress={() => handleLongPressOnNote(item)}
             settings={settings} 
             showPin={!isInTrash}
@@ -284,7 +292,6 @@ const AppContent = () => {
         contentContainerStyle={{ paddingBottom: 100 }}
       />
       
-      {/* Кнопка создания заметки - не показываем в корзине */}
       {!isInTrash && (
         <TouchableOpacity 
           style={{ 
@@ -331,10 +338,7 @@ const AppContent = () => {
         }} 
         onDelete={() => {
           if (!isInTrashFolder) {
-            const updatedNote = { ...selectedNoteForAction, folder: 'Корзина', deleted: true, pinned: false, updatedAt: Date.now() };
-            const index = notes.findIndex(n => n.id === selectedNoteForAction.id);
-            const newNotes = [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)];
-            saveNotes(newNotes);
+            handleQuickDelete(selectedNoteForAction);
           }
           setShowNoteDialog(false);
           setSelectedNoteForAction(null);
@@ -402,6 +406,7 @@ const AppContent = () => {
           onSave={handleSaveNote}
           setCurrentScreen={setCurrentScreen}
           insets={insets}
+          onQuickDelete={handleQuickDelete}
         />
       );
     case 'search':
@@ -422,6 +427,7 @@ const AppContent = () => {
           searchQuery={searchQuery}
           settings={settings}
           onLongPressNote={handleLongPressOnNote}
+          onNoteOpen={handleNoteOpen}
         />
       );
     default:
