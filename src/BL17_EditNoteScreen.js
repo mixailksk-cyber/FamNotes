@@ -12,7 +12,8 @@ const EditNoteScreen = ({
   settings, 
   onSave, 
   setCurrentScreen, 
-  insets
+  insets,
+  onQuickDelete
 }) => {
   const brandColor = getBrandColor(settings);
   const [note, setNote] = useState(selectedNote ? { ...selectedNote } : { 
@@ -44,27 +45,19 @@ const EditNoteScreen = ({
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Удалить заметку',
-      isInTrash ? 'Удалить заметку безвозвратно?' : 'Переместить заметку в корзину?',
-      [
-        { text: 'Отмена', style: 'cancel' },
-        { 
-          text: 'Удалить', 
-          style: 'destructive',
-          onPress: () => {
-            if (isInTrash) {
-              const updatedNotes = notes.filter(n => n.id !== note.id);
-              onSave(updatedNotes);
-            } else {
-              const updatedNote = { ...note, folder: 'Корзина', deleted: true, updatedAt: Date.now() };
-              onSave(updatedNote);
-            }
-            setCurrentScreen('notes');
-          }
-        }
-      ]
-    );
+    if (onQuickDelete) {
+      onQuickDelete(note);
+      setCurrentScreen('notes');
+    } else {
+      if (isInTrash) {
+        const updatedNotes = notes.filter(n => n.id !== note.id);
+        onSave(updatedNotes);
+      } else {
+        const updatedNote = { ...note, folder: 'Корзина', deleted: true, updatedAt: Date.now() };
+        onSave(updatedNote);
+      }
+      setCurrentScreen('notes');
+    }
   };
 
   const handleBack = () => {
@@ -98,7 +91,6 @@ const EditNoteScreen = ({
   };
 
   const handleEditPress = () => {
-    // Если заметка в корзине, не переходим в режим редактирования
     if (isInTrash) {
       Alert.alert('Заметка в корзине', 'Заметки в корзине можно только просматривать и восстанавливать');
       return;
@@ -115,7 +107,6 @@ const EditNoteScreen = ({
   };
 
   const handleColorSelect = (color) => {
-    // Если заметка в корзине, не меняем цвет
     if (isInTrash) {
       Alert.alert('Заметка в корзине', 'Заметки в корзине нельзя редактировать');
       return;
@@ -145,16 +136,19 @@ const EditNoteScreen = ({
         showSearch={false} 
         brandColor={note.color || brandColor}
       >
-        <TouchableOpacity onPress={handleShare}>
-          <Icon name="share" size={24} color="white" />
-        </TouchableOpacity>
-        
+        {/* Кнопка выбора цвета (только не в корзине) */}
         {!isInTrash && (
           <TouchableOpacity onPress={() => setShowColor(true)}>
             <Icon name="palette" size={24} color="white" />
           </TouchableOpacity>
         )}
         
+        {/* Кнопка поделиться */}
+        <TouchableOpacity onPress={handleShare}>
+          <Icon name="share" size={24} color="white" />
+        </TouchableOpacity>
+        
+        {/* Кнопка корзины - удаляет без подтверждения */}
         <TouchableOpacity onPress={handleDelete}>
           <Icon name="delete" size={24} color="white" />
         </TouchableOpacity>
