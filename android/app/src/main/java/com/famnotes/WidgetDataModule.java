@@ -47,14 +47,12 @@ public class WidgetDataModule extends ReactContextBaseJavaModule {
                     
                     StringBuilder notesText = new StringBuilder();
                     if (notesArray.length() == 0) {
-                        notesText.append("Нет заметок");
+                        notesText.append("Нет заметок в папке Главная\n\nНажмите + чтобы создать");
                     } else {
-                        for (int i = 0; i < Math.min(notesArray.length(), 5); i++) {
+                        // Показываем все заметки из папки Главная
+                        for (int i = 0; i < notesArray.length(); i++) {
                             String title = notesArray.getJSONObject(i).optString("title", "Без названия");
                             notesText.append("• ").append(title).append("\n");
-                        }
-                        if (notesArray.length() > 5) {
-                            notesText.append("+ еще ").append(notesArray.length() - 5);
                         }
                     }
                     
