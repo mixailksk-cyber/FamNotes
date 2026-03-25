@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.text.Html;
 import android.text.TextUtils;
 import android.widget.RemoteViews;
 
@@ -56,28 +57,33 @@ public class WidgetDataModule extends ReactContextBaseJavaModule {
                             String title = note.optString("title", "");
                             String content = note.optString("content", "");
                             
-                            // Формируем строку заметки
+                            // Формируем HTML строку с жирным заголовком
                             if (!TextUtils.isEmpty(title) && !TextUtils.isEmpty(content)) {
-                                // Обрезаем контент до одной строки (примерно 40 символов)
                                 String shortContent = content.length() > 40 ? content.substring(0, 40) + "..." : content;
-                                notesText.append("• ").append(title).append("\n  ").append(shortContent).append("\n");
+                                notesText.append("<b>").append(title).append("</b><br/>");
+                                notesText.append(shortContent);
                             } else if (!TextUtils.isEmpty(title)) {
-                                notesText.append("• ").append(title).append("\n");
+                                notesText.append("<b>").append(title).append("</b>");
                             } else if (!TextUtils.isEmpty(content)) {
                                 String shortContent = content.length() > 45 ? content.substring(0, 45) + "..." : content;
-                                notesText.append("• ").append(shortContent).append("\n");
+                                notesText.append(shortContent);
                             } else {
-                                notesText.append("• Без названия\n");
+                                notesText.append("Без названия");
                             }
                             
                             // Добавляем разделитель (кроме последней заметки)
                             if (i < notesArray.length() - 1) {
-                                notesText.append("\n");
+                                notesText.append("<br/><br/><hr color='#33FFFFFF'/><br/>");
                             }
                         }
                     }
                     
-                    views.setTextViewText(R.id.widget_notes_list, notesText.toString());
+                    // Используем Html.fromHtml для форматирования
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                        views.setTextViewText(R.id.widget_notes_list, Html.fromHtml(notesText.toString(), Html.FROM_HTML_MODE_LEGACY));
+                    } else {
+                        views.setTextViewText(R.id.widget_notes_list, Html.fromHtml(notesText.toString()));
+                    }
                     
                     appWidgetManager.updateAppWidget(appWidgetId, views);
                 }
