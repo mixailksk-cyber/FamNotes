@@ -57,18 +57,18 @@ public class WidgetDataModule extends ReactContextBaseJavaModule {
                             String title = note.optString("title", "");
                             String content = note.optString("content", "");
                             
-                            // Формируем HTML строку с жирным заголовком
+                            // Формируем HTML строку с жирным заголовком (размер 18sp) и текстом (размер 16sp)
                             if (!TextUtils.isEmpty(title) && !TextUtils.isEmpty(content)) {
                                 String shortContent = content.length() > 40 ? content.substring(0, 40) + "..." : content;
-                                notesText.append("<b>").append(title).append("</b><br/>");
-                                notesText.append(shortContent);
+                                notesText.append("<b><font size='18'>").append(title).append("</font></b><br/>");
+                                notesText.append("<font size='16'>").append(shortContent).append("</font>");
                             } else if (!TextUtils.isEmpty(title)) {
-                                notesText.append("<b>").append(title).append("</b>");
+                                notesText.append("<b><font size='18'>").append(title).append("</font></b>");
                             } else if (!TextUtils.isEmpty(content)) {
                                 String shortContent = content.length() > 45 ? content.substring(0, 45) + "..." : content;
-                                notesText.append(shortContent);
+                                notesText.append("<font size='16'>").append(shortContent).append("</font>");
                             } else {
-                                notesText.append("Без названия");
+                                notesText.append("<font size='16'>Без названия</font>");
                             }
                             
                             // Добавляем разделитель (кроме последней заметки)
