@@ -24,6 +24,7 @@ const AppContent = () => {
   
   const { notes, folders, settings, saveNotes, saveFolders, saveSettings, loadData } = useNotesData();
 
+  // Обработка кнопки "Назад" на Android
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       if (showNoteDialog) {
@@ -407,6 +408,7 @@ const AppContent = () => {
           setCurrentScreen={setCurrentScreen}
           insets={insets}
           onQuickDelete={handleQuickDelete}
+          isNewNote={selectedNote && selectedNote.title === '' && selectedNote.content === '' && !selectedNote.id}
         />
       );
     case 'search':
