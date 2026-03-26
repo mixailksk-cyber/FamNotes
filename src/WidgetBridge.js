@@ -10,7 +10,6 @@ export const updateWidgetData = async (notes) => {
       return;
     }
 
-    // Берем ВСЕ заметки из папки "Главная"
     const mainFolderNotes = notes
       .filter(note => note.folder === 'Главная' && !note.deleted)
       .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
@@ -24,13 +23,11 @@ export const updateWidgetData = async (notes) => {
     const notesJson = JSON.stringify(mainFolderNotes);
     console.log('📱 Updating widget with', mainFolderNotes.length, 'notes from Главная');
     
-    // Для Android нативного виджета
     if (Platform.OS === 'android' && WidgetDataModule) {
       WidgetDataModule.updateWidgetNotes(notesJson);
       console.log('✅ Widget updated via native module');
     }
     
-    // Сохраняем в AsyncStorage для возможного использования
     await AsyncStorage.setItem('@widget_notes', notesJson);
     
   } catch (error) {
