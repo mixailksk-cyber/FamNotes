@@ -142,7 +142,8 @@ const AppContent = () => {
       deleted: false,
       pinned: false,
       locked: false,
-      reminder: null
+      reminder: null,
+      isNew: true
     };
     setSelectedNote(newNote);
     setCurrentScreen('edit');
@@ -161,7 +162,13 @@ const AppContent = () => {
       ? [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)] 
       : [updatedNote, ...notes];
     
-    saveNotes(newNotes);
+    // Удаляем флаг isNew перед сохранением
+    const notesToSave = newNotes.map(n => {
+      const { isNew, ...rest } = n;
+      return rest;
+    });
+    
+    saveNotes(notesToSave);
     setCurrentScreen('notes');
     setSelectedNote(null);
   };
@@ -444,7 +451,7 @@ const AppContent = () => {
           setCurrentScreen={setCurrentScreen}
           insets={insets}
           onQuickDelete={handleQuickDelete}
-          isNewNote={selectedNote && selectedNote.title === '' && selectedNote.content === '' && !selectedNote.id}
+          isNewNote={selectedNote && selectedNote.isNew === true}
         />
       );
     case 'search':
