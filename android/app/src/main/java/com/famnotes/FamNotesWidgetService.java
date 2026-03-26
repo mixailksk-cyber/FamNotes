@@ -11,6 +11,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class FamNotesWidgetService extends RemoteViewsService {
@@ -55,13 +57,31 @@ public class FamNotesWidgetService extends RemoteViewsService {
                 String notesJson = prefs.getString(KEY_WIDGET_NOTES, "[]");
                 
                 JSONArray notesArray = new JSONArray(notesJson);
+                List<WidgetNoteItem> tempNotes = new ArrayList<>();
+                
                 for (int i = 0; i < notesArray.length(); i++) {
                     JSONObject note = notesArray.getJSONObject(i);
                     WidgetNoteItem item = new WidgetNoteItem();
+                    item.id = note.optString("id", "");
                     item.title = note.optString("title", "");
                     item.content = note.optString("content", "");
-                    mNotes.add(item);
+                    item.pinned = note.optBoolean("pinned", false);
+                    item.updatedAt = note.optLong("updatedAt", 0);
+                    tempNotes.add(item);
                 }
+                
+                // Сортировка: сначала закрепленные, потом по дате обновления
+                Collections.sort(tempNotes, new Comparator<WidgetNoteItem>() {
+                    @Override
+                    public int compare(WidgetNoteItem a, WidgetNoteItem b) {
+                        if (a.pinned && !b.pinned) return -1;
+                        if (!a.pinned && b.pinned) return 1;
+                        return Long.compare(b.updatedAt, a.updatedAt);
+                    }
+                });
+                
+                mNotes.addAll(tempNotes);
+                
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -134,8 +154,11 @@ public class FamNotesWidgetService extends RemoteViewsService {
         }
         
         private static class WidgetNoteItem {
+            String id;
             String title;
             String content;
+            boolean pinned;
+            long updatedAt;
         }
     }
 }
