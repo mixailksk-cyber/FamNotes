@@ -1,8 +1,10 @@
 package com.famnotes;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
@@ -19,10 +21,8 @@ public class FamNotesWidgetService extends RemoteViewsService {
 
     private static final String SHARED_PREFS_NAME = "FamNotesWidgetPrefs";
     private static final String KEY_WIDGET_NOTES = "widget_notes";
-    private static String sCachedNotesJson = "[]";
 
     public static void updateWidgetData(Context context, String notesJson) {
-        sCachedNotesJson = notesJson;
         SharedPreferences prefs = context.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(KEY_WIDGET_NOTES, notesJson).apply();
     }
@@ -129,6 +129,23 @@ public class FamNotesWidgetService extends RemoteViewsService {
                 views.setViewVisibility(R.id.widget_item_title, android.view.View.VISIBLE);
                 views.setViewVisibility(R.id.widget_item_content, android.view.View.GONE);
             }
+            
+            // Настройка открытия заметки при нажатии на элемент списка
+            Intent openNoteIntent = new Intent(mContext, MainActivity.class);
+            openNoteIntent.setAction(Intent.ACTION_MAIN);
+            openNoteIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+            openNoteIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            openNoteIntent.setData(Uri.parse("famnotes://note/" + note.id));
+            openNoteIntent.putExtra("open_note_id", note.id);
+            
+            PendingIntent pendingIntent = PendingIntent.getActivity(
+                mContext, 
+                position, 
+                openNoteIntent, 
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+            views.setOnClickPendingIntent(R.id.widget_item_title, pendingIntent);
+            views.setOnClickPendingIntent(R.id.widget_item_content, pendingIntent);
             
             return views;
         }
