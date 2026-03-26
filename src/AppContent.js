@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, FlatList, Text, TouchableOpacity, Alert, BackHandler, Platform, Linking } from 'react-native';
+import { View, FlatList, Text, TouchableOpacity, Alert, BackHandler, Platform, Linking, StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getBrandColor } from './BL02_Constants';
@@ -288,6 +288,7 @@ const AppContent = () => {
   
   const NotesListScreen = () => (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
+      <StatusBar backgroundColor={brandColor} barStyle="light-content" />
       <Header 
         title={currentFolder} 
         rightIcon="settings" 
