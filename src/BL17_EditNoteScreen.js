@@ -36,6 +36,7 @@ const EditNoteScreen = ({
   
   const isInTrash = note.folder === 'Корзина' || note.deleted === true;
 
+  // Для новой заметки: фокус в поле текста и открытие клавиатуры
   useEffect(() => {
     if (isNewNote && contentInputRef.current) {
       setTimeout(() => {
