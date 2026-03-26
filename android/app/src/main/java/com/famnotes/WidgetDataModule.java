@@ -11,9 +11,6 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Promise;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-
 public class WidgetDataModule extends ReactContextBaseJavaModule {
     private static final String SHARED_PREFS_NAME = "FamNotesWidgetPrefs";
     private static final String KEY_WIDGET_NOTES = "widget_notes";
@@ -73,7 +70,7 @@ public class WidgetDataModule extends ReactContextBaseJavaModule {
                     appWidgetManager.updateAppWidget(appWidgetId, views);
                 }
             }
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
