@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Share, ScrollView, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Share, ScrollView, TouchableWithoutFeedback, StatusBar } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Header from './BL04_Header';
 import ColorPickerModal from './BL08_ColorPickerModal';
