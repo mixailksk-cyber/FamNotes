@@ -21,6 +21,7 @@ const AppContent = () => {
   const [showNoteDialog, setShowNoteDialog] = React.useState(false);
   const [selectedNoteForAction, setSelectedNoteForAction] = React.useState(null);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [isSaving, setIsSaving] = React.useState(false);
   
   const { notes, folders, settings, saveNotes, saveFolders, saveSettings, loadData } = useNotesData();
 
@@ -33,30 +34,25 @@ const AppContent = () => {
         const noteId = url.split('famnotes://note/')[1];
         const note = notes.find(n => n.id === noteId);
         if (note) {
-          console.log('Opening note from deep link:', noteId);
           setSelectedNote(note);
           setCurrentScreen('edit');
         }
       } else if (url && url.includes('famnotes://create')) {
-        console.log('Creating new note from deep link');
         handleAddNote();
       }
     };
     
     const getInitialUrl = async () => {
       const initialUrl = await Linking.getInitialURL();
-      console.log('Initial URL:', initialUrl);
       if (initialUrl) {
         if (initialUrl.includes('famnotes://note/')) {
           const noteId = initialUrl.split('famnotes://note/')[1];
           const note = notes.find(n => n.id === noteId);
           if (note) {
-            console.log('Opening note from initial URL:', noteId);
             setSelectedNote(note);
             setCurrentScreen('edit');
           }
         } else if (initialUrl.includes('famnotes://create')) {
-          console.log('Creating new note from initial URL');
           handleAddNote();
         }
       }
@@ -143,7 +139,8 @@ const AppContent = () => {
   const isInTrash = currentFolder === 'Корзина';
   
   const handleAddNote = () => {
-    console.log('🔵 handleAddNote called');
+    if (isSaving) return;
+    
     const newNote = {
       id: Date.now().toString(),
       title: '',
@@ -163,34 +160,39 @@ const AppContent = () => {
   };
   
   const handleSaveNote = (updatedNote) => {
-    console.log('🟢 handleSaveNote called, updatedNote:', { id: updatedNote?.id, isNew: updatedNote?.isNew, title: updatedNote?.title });
+    if (isSaving) return;
+    setIsSaving(true);
     
-    if (Array.isArray(updatedNote)) {
-      saveNotes(updatedNote);
-      console.log('🟢 Saved array, length:', updatedNote.length);
-      return;
+    try {
+      if (Array.isArray(updatedNote)) {
+        saveNotes(updatedNote);
+        setIsSaving(false);
+        return;
+      }
+      
+      if (!updatedNote.updatedAt) updatedNote.updatedAt = Date.now();
+      
+      const index = notes.findIndex(n => n.id === updatedNote.id);
+      const newNotes = index >= 0 
+        ? [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)] 
+        : [updatedNote, ...notes];
+      
+      // Удаляем флаг isNew перед сохранением
+      const notesToSave = newNotes.map(n => {
+        const { isNew, ...rest } = n;
+        return rest;
+      });
+      
+      saveNotes(notesToSave);
+      
+      // Очищаем состояние и переходим к списку заметок
+      setSelectedNote(null);
+      setCurrentScreen('notes');
+    } finally {
+      setTimeout(() => {
+        setIsSaving(false);
+      }, 100);
     }
-    
-    if (!updatedNote.updatedAt) updatedNote.updatedAt = Date.now();
-    
-    const index = notes.findIndex(n => n.id === updatedNote.id);
-    const newNotes = index >= 0 
-      ? [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)] 
-      : [updatedNote, ...notes];
-    
-    // Удаляем флаг isNew перед сохранением
-    const notesToSave = newNotes.map(n => {
-      const { isNew, ...rest } = n;
-      return rest;
-    });
-    
-    console.log('🟢 Saving note, notes count:', notesToSave.length);
-    saveNotes(notesToSave);
-    
-    // Важно: сначала обнуляем selectedNote, потом меняем экран
-    console.log('🟢 Setting selectedNote to null, changing screen to notes');
-    setSelectedNote(null);
-    setCurrentScreen('notes');
   };
   
   const handleMoveNote = (note, targetFolder) => {
@@ -423,9 +425,7 @@ const AppContent = () => {
     );
   };
   
-  // Определяем, является ли заметка новой
   const isSelectedNoteNew = selectedNote && selectedNote.isNew === true;
-  console.log('🔵 Current screen:', currentScreen, 'selectedNote:', selectedNote?.id, 'isNew:', isSelectedNoteNew);
   
   switch (currentScreen) {
     case 'notes':
@@ -465,7 +465,6 @@ const AppContent = () => {
         />
       );
     case 'edit':
-      console.log('🔵 Rendering EditNoteScreen with isNewNote:', isSelectedNoteNew);
       return (
         <EditNoteScreen 
           selectedNote={selectedNote}
