@@ -6,13 +6,42 @@
     android:clickable="true"
     android:focusable="true"
     android:background="@drawable/widget_background"
-    android:padding="16dp">
+    android:padding="12dp">
 
     <LinearLayout
         android:id="@+id/widget_inner"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Заметки"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/widget_add_button"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/widget_button_background"
+                android:src="@android:drawable/ic_menu_add"
+                android:padding="4dp"
+                android:scaleType="centerInside"
+                android:clickable="true"
+                android:focusable="true" />
+
+        </LinearLayout>
 
         <ListView
             android:id="@+id/widget_list"
@@ -28,11 +57,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Перейти в приложение"
-            android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textColor="#CCCCCC"
+            android:textSize="10sp"
             android:gravity="center"
-            android:paddingTop="12dp"
-            android:layout_marginTop="8dp" />
+            android:paddingTop="8dp"
+            android:layout_marginTop="4dp" />
 
     </LinearLayout>
 
