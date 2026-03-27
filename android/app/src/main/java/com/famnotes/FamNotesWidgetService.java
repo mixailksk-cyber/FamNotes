@@ -1,10 +1,8 @@
 package com.famnotes;
 
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
@@ -57,7 +55,6 @@ public class FamNotesWidgetService extends RemoteViewsService {
                 String notesJson = prefs.getString(KEY_WIDGET_NOTES, "[]");
                 
                 JSONArray notesArray = new JSONArray(notesJson);
-                List<WidgetNoteItem> tempNotes = new ArrayList<>();
                 
                 for (int i = 0; i < notesArray.length(); i++) {
                     JSONObject note = notesArray.getJSONObject(i);
@@ -67,10 +64,11 @@ public class FamNotesWidgetService extends RemoteViewsService {
                     item.content = note.optString("content", "");
                     item.pinned = note.optBoolean("pinned", false);
                     item.updatedAt = note.optLong("updatedAt", 0);
-                    tempNotes.add(item);
+                    mNotes.add(item);
                 }
                 
-                Collections.sort(tempNotes, new Comparator<WidgetNoteItem>() {
+                // Сортировка: сначала закрепленные, потом по дате обновления
+                Collections.sort(mNotes, new Comparator<WidgetNoteItem>() {
                     @Override
                     public int compare(WidgetNoteItem a, WidgetNoteItem b) {
                         if (a.pinned && !b.pinned) return -1;
@@ -78,8 +76,6 @@ public class FamNotesWidgetService extends RemoteViewsService {
                         return Long.compare(b.updatedAt, a.updatedAt);
                     }
                 });
-                
-                mNotes.addAll(tempNotes);
                 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -122,20 +118,16 @@ public class FamNotesWidgetService extends RemoteViewsService {
                 views.setViewVisibility(R.id.widget_item_content, android.view.View.GONE);
             }
             
+            // Если нет ни заголовка, ни содержимого
             if ((note.title == null || note.title.isEmpty()) && (note.content == null || note.content.isEmpty())) {
                 views.setTextViewText(R.id.widget_item_title, "Без названия");
                 views.setViewVisibility(R.id.widget_item_title, android.view.View.VISIBLE);
                 views.setViewVisibility(R.id.widget_item_content, android.view.View.GONE);
             }
             
-            // Создаем шаблонный Intent для открытия заметки
-            Intent fillInIntent = new Intent();
-            fillInIntent.setAction(FamNotesWidgetProvider.ACTION_OPEN_NOTE);
-            fillInIntent.putExtra(FamNotesWidgetProvider.EXTRA_NOTE_ID, note.id);
-            fillInIntent.setData(Uri.parse("famnotes://note/" + note.id));
-            
-            views.setOnClickFillInIntent(R.id.widget_item_title, fillInIntent);
-            views.setOnClickFillInIntent(R.id.widget_item_content, fillInIntent);
+            // Отключаем кликабельность отдельных элементов, чтобы клик уходил на контейнер
+            views.setOnClickPendingIntent(R.id.widget_item_title, null);
+            views.setOnClickPendingIntent(R.id.widget_item_content, null);
             
             return views;
         }
