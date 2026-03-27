@@ -26,7 +26,7 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
             views.setRemoteAdapter(R.id.widget_list, intent);
             views.setEmptyView(R.id.widget_list, android.R.id.empty);
             
-            // Настройка кнопки "Создать заметку"
+            // Настройка кнопки "Создать заметку" (плюсик)
             Intent createNoteIntent = new Intent(context, FamNotesWidgetProvider.class);
             createNoteIntent.setAction(ACTION_CREATE_NOTE);
             PendingIntent createPendingIntent = PendingIntent.getBroadcast(
@@ -37,21 +37,20 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
             );
             views.setOnClickPendingIntent(R.id.widget_add_button, createPendingIntent);
             
-            // Настройка открытия приложения при нажатии на весь виджет
+            // Настройка кнопки "Перейти в приложение"
             Intent openAppIntent = new Intent(context, MainActivity.class);
             openAppIntent.setAction(Intent.ACTION_MAIN);
             openAppIntent.addCategory(Intent.CATEGORY_LAUNCHER);
             openAppIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             openAppIntent.setData(Uri.parse("famnotes://widget"));
             
-            PendingIntent pendingIntent = PendingIntent.getActivity(
+            PendingIntent openPendingIntent = PendingIntent.getActivity(
                 context, 
                 appWidgetId, 
                 openAppIntent, 
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
-            
-            views.setOnClickPendingIntent(R.id.widget_container, pendingIntent);
+            views.setOnClickPendingIntent(R.id.widget_open_app_button, openPendingIntent);
             
             appWidgetManager.updateAppWidget(appWidgetId, views);
         }
