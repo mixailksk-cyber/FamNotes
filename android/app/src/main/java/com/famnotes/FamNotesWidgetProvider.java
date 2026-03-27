@@ -26,10 +26,14 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
             views.setRemoteAdapter(R.id.widget_list, intent);
             views.setEmptyView(R.id.widget_list, android.R.id.empty);
             
-            // Настройка кнопки "Новая заметка"
-            Intent createNoteIntent = new Intent(context, FamNotesWidgetProvider.class);
-            createNoteIntent.setAction(ACTION_CREATE_NOTE);
-            PendingIntent createPendingIntent = PendingIntent.getBroadcast(
+            // Настройка кнопки "Новая заметка" - используем PendingIntent.getActivity напрямую
+            Intent createNoteIntent = new Intent(context, MainActivity.class);
+            createNoteIntent.setAction(Intent.ACTION_VIEW);
+            createNoteIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            createNoteIntent.setData(Uri.parse("famnotes://create"));
+            createNoteIntent.putExtra("create_new_note", true);
+            
+            PendingIntent createPendingIntent = PendingIntent.getActivity(
                 context,
                 appWidgetId,
                 createNoteIntent,
@@ -60,16 +64,6 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
     @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
-        
-        // Обработка нажатия на кнопку создания заметки
-        if (ACTION_CREATE_NOTE.equals(intent.getAction())) {
-            Intent openAppIntent = new Intent(context, MainActivity.class);
-            openAppIntent.setAction(Intent.ACTION_VIEW);
-            openAppIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            openAppIntent.setData(Uri.parse("famnotes://create"));
-            openAppIntent.putExtra("create_new_note", true);
-            context.startActivity(openAppIntent);
-        }
         
         if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
