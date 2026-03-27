@@ -11,6 +11,9 @@ import android.widget.RemoteViews;
 
 public class FamNotesWidgetProvider extends AppWidgetProvider {
 
+    public static final String ACTION_OPEN_NOTE = "OPEN_NOTE";
+    public static final String EXTRA_NOTE_ID = "note_id";
+
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         for (int appWidgetId : appWidgetIds) {
@@ -45,19 +48,23 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
     }
     
     @Override
-    public void onEnabled(Context context) {
-        super.onEnabled(context);
-    }
-    
-    @Override
-    public void onDisabled(Context context) {
-        super.onDisabled(context);
-    }
-    
-    @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
-        // Принудительное обновление при получении BOOT_COMPLETED
+        
+        // Обработка нажатия на заметку в виджете
+        if (ACTION_OPEN_NOTE.equals(intent.getAction())) {
+            String noteId = intent.getStringExtra(EXTRA_NOTE_ID);
+            if (noteId != null) {
+                Intent openAppIntent = new Intent(context, MainActivity.class);
+                openAppIntent.setAction(Intent.ACTION_VIEW);
+                openAppIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                openAppIntent.setData(Uri.parse("famnotes://note/" + noteId));
+                openAppIntent.putExtra("open_note_id", noteId);
+                context.startActivity(openAppIntent);
+            }
+        }
+        
+        // Обновление при загрузке системы
         if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
             ComponentName componentName = new ComponentName(context, FamNotesWidgetProvider.class);
@@ -66,5 +73,15 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
                 onUpdate(context, appWidgetManager, appWidgetIds);
             }
         }
+    }
+    
+    @Override
+    public void onEnabled(Context context) {
+        super.onEnabled(context);
+    }
+    
+    @Override
+    public void onDisabled(Context context) {
+        super.onDisabled(context);
     }
 }
