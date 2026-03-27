@@ -71,26 +71,6 @@ const AppContent = () => {
     };
   }, [notes]);
 
-  // Обработка входящих Intent (для Android) - проверяем getInitialURL повторно после загрузки
-  useEffect(() => {
-    const checkIntentAfterMount = async () => {
-      try {
-        const initialIntent = await Linking.getInitialURL();
-        if (initialIntent && initialIntent.includes('famnotes://create')) {
-          console.log('Creating new note from intent after mount');
-          handleAddNote();
-        }
-      } catch (e) {
-        console.log('Intent check error:', e);
-      }
-    };
-    
-    // Небольшая задержка для уверенности, что все загрузилось
-    setTimeout(() => {
-      checkIntentAfterMount();
-    }, 500);
-  }, []);
-
   // Обработка кнопки "Назад" на Android
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -183,6 +163,8 @@ const AppContent = () => {
   };
   
   const handleSaveNote = (updatedNote) => {
+    console.log('handleSaveNote called, isNew:', updatedNote?.isNew);
+    
     if (Array.isArray(updatedNote)) {
       saveNotes(updatedNote);
       return;
@@ -195,14 +177,17 @@ const AppContent = () => {
       ? [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)] 
       : [updatedNote, ...notes];
     
+    // Удаляем флаг isNew перед сохранением
     const notesToSave = newNotes.map(n => {
       const { isNew, ...rest } = n;
       return rest;
     });
     
     saveNotes(notesToSave);
-    setCurrentScreen('notes');
+    
+    // Важно: сначала обнуляем selectedNote, потом меняем экран
     setSelectedNote(null);
+    setCurrentScreen('notes');
   };
   
   const handleMoveNote = (note, targetFolder) => {
@@ -435,6 +420,9 @@ const AppContent = () => {
     );
   };
   
+  // Определяем, является ли заметка новой
+  const isSelectedNoteNew = selectedNote && selectedNote.isNew === true;
+  
   switch (currentScreen) {
     case 'notes':
       return (
@@ -483,7 +471,7 @@ const AppContent = () => {
           setCurrentScreen={setCurrentScreen}
           insets={insets}
           onQuickDelete={handleQuickDelete}
-          isNewNote={selectedNote && selectedNote.isNew === true}
+          isNewNote={isSelectedNoteNew}
         />
       );
     case 'search':
