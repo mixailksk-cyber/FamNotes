@@ -24,9 +24,6 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
             views.setRemoteAdapter(R.id.widget_list, intent);
             views.setEmptyView(R.id.widget_list, android.R.id.empty);
             
-            // Отключаем кликабельность ListView
-            views.setInt(R.id.widget_list, "setEnabled", 0);
-            
             // Настройка открытия приложения при нажатии на весь виджет
             Intent openAppIntent = new Intent(context, MainActivity.class);
             openAppIntent.setAction(Intent.ACTION_MAIN);
@@ -41,7 +38,6 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
             
-            // Устанавливаем PendingIntent на весь FrameLayout
             views.setOnClickPendingIntent(R.id.widget_container, pendingIntent);
             
             appWidgetManager.updateAppWidget(appWidgetId, views);
