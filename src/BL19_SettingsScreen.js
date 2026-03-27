@@ -99,7 +99,7 @@ const SettingsScreen = ({
         
         Alert.alert(
           '✅ Резервная копия создана',
-          `Файл: ${fileName}\nРазмер: ${(fileInfo.size / 1024).toFixed(2)} KB`,
+          `Файл: ${fileName}\nРазмер: ${(fileInfo.size / 1024).toFixed(2)} KB\n\nСохранено в папку "Downloads" (Загрузки)`,
           [
             { 
               text: 'OK', 
@@ -281,7 +281,7 @@ const SettingsScreen = ({
           </View>
         </View>
 
-        {/* Цвет бренда - сетка 2 ряда по 6 */}
+        {/* Цвет бренда */}
         <View style={{ marginBottom: 32 }}>
           <Text style={{ fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 16 }}>Цвет бренда</Text>
           <View style={{ backgroundColor: '#F8F9FA', borderRadius: 16, padding: 20 }}>
@@ -353,6 +353,9 @@ const SettingsScreen = ({
               )}
             </TouchableOpacity>
           </View>
+          <Text style={{ color: '#999', fontSize: 12, marginTop: 8, textAlign: 'center' }}>
+            Копия сохраняется в папку "Downloads" (Загрузки)
+          </Text>
         </View>
       </ScrollView>
     </View>
