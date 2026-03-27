@@ -1,5 +1,6 @@
 package com.famnotes;
 
+import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
@@ -22,18 +23,18 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
             views.setRemoteAdapter(R.id.widget_list, intent);
             views.setEmptyView(R.id.widget_list, android.R.id.empty);
             
-            // Настройка открытия приложения при нажатии на виджет
+            // Настройка открытия приложения при нажатии на пустую область виджета
             Intent openAppIntent = new Intent(context, MainActivity.class);
             openAppIntent.setAction(Intent.ACTION_MAIN);
             openAppIntent.addCategory(Intent.CATEGORY_LAUNCHER);
             openAppIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             openAppIntent.setData(Uri.parse("famnotes://widget"));
             
-            android.app.PendingIntent pendingIntent = android.app.PendingIntent.getActivity(
+            PendingIntent pendingIntent = PendingIntent.getActivity(
                 context, 
                 appWidgetId, 
                 openAppIntent, 
-                android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
             views.setOnClickPendingIntent(R.id.widget_container, pendingIntent);
             
