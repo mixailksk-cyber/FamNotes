@@ -27,6 +27,17 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
             views.setRemoteAdapter(R.id.widget_list, intent);
             views.setEmptyView(R.id.widget_list, android.R.id.empty);
             
+            // Создаем шаблонный PendingIntent для виджета
+            Intent templateIntent = new Intent(context, FamNotesWidgetProvider.class);
+            templateIntent.setAction(ACTION_OPEN_NOTE);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context, 
+                appWidgetId, 
+                templateIntent, 
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+            views.setPendingIntentTemplate(R.id.widget_list, pendingIntent);
+            
             // Настройка открытия приложения при нажатии на пустую область виджета
             Intent openAppIntent = new Intent(context, MainActivity.class);
             openAppIntent.setAction(Intent.ACTION_MAIN);
@@ -34,13 +45,13 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
             openAppIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             openAppIntent.setData(Uri.parse("famnotes://widget"));
             
-            PendingIntent pendingIntent = PendingIntent.getActivity(
+            PendingIntent appPendingIntent = PendingIntent.getActivity(
                 context, 
                 appWidgetId, 
                 openAppIntent, 
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
-            views.setOnClickPendingIntent(R.id.widget_container, pendingIntent);
+            views.setOnClickPendingIntent(R.id.widget_container, appPendingIntent);
             
             appWidgetManager.updateAppWidget(appWidgetId, views);
         }
