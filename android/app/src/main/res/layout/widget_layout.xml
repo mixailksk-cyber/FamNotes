@@ -30,10 +30,7 @@
             android:orientation="horizontal"
             android:gravity="center"
             android:paddingTop="12dp"
-            android:layout_marginTop="8dp"
-            android:divider="?"
-            android:showDividers="middle"
-            android:dividerPadding="8dp">
+            android:layout_marginTop="8dp">
 
             <TextView
                 android:id="@+id/widget_open_app_button"
