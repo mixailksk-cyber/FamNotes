@@ -24,7 +24,7 @@ const AppContent = () => {
   
   const { notes, folders, settings, saveNotes, saveFolders, saveSettings, loadData } = useNotesData();
 
-  // Обработка открытия заметки из виджета
+  // Обработка открытия заметки из виджета и создания заметки из виджета
   useEffect(() => {
     const handleDeepLink = (event) => {
       const url = event.url;
@@ -37,6 +37,9 @@ const AppContent = () => {
           setSelectedNote(note);
           setCurrentScreen('edit');
         }
+      } else if (url && url.includes('famnotes://create')) {
+        console.log('Creating new note from widget');
+        handleAddNote();
       }
     };
     
@@ -51,6 +54,9 @@ const AppContent = () => {
           setSelectedNote(note);
           setCurrentScreen('edit');
         }
+      } else if (initialUrl && initialUrl.includes('famnotes://create')) {
+        console.log('Creating new note from initial URL');
+        handleAddNote();
       }
     };
     
@@ -63,7 +69,58 @@ const AppContent = () => {
     };
   }, [notes]);
 
-  // Обработка остальной части приложения...
+  // Обработка кнопки "Назад" на Android
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (showNoteDialog) {
+        setShowNoteDialog(false);
+        setSelectedNoteForAction(null);
+        return true;
+      }
+      
+      if (currentScreen === 'edit' && navigationStack[navigationStack.length - 1] === 'search') {
+        setCurrentScreen('search');
+        setSelectedNote(null);
+        setNavigationStack(prev => prev.slice(0, -1));
+        return true;
+      }
+      
+      if (currentScreen === 'edit') {
+        setCurrentScreen('notes');
+        setSelectedNote(null);
+        setNavigationStack(prev => prev.slice(0, -1));
+        return true;
+      }
+      
+      if (currentScreen === 'search') {
+        setCurrentScreen('notes');
+        setSearchQuery('');
+        setNavigationStack(prev => prev.slice(0, -1));
+        return true;
+      }
+      
+      if (currentScreen === 'folders') {
+        setCurrentScreen('notes');
+        setNavigationStack(prev => prev.slice(0, -1));
+        return true;
+      }
+      
+      if (currentScreen === 'settings') {
+        setCurrentScreen('notes');
+        setNavigationStack(prev => prev.slice(0, -1));
+        return true;
+      }
+      
+      if (currentScreen === 'notes' && currentFolder !== 'Главная') {
+        setCurrentFolder('Главная');
+        return true;
+      }
+      
+      return false;
+    });
+    
+    return () => backHandler.remove();
+  }, [currentScreen, currentFolder, navigationStack, showNoteDialog]);
   
   const filteredNotes = React.useMemo(() => {
     if (currentFolder === 'Корзина') {
