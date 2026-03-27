@@ -3,6 +3,7 @@ import { Alert, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NOTE_COLORS } from './BL02_Constants';
 import { updateWidgetData } from './WidgetBridge';
+import { configureNotifications } from './BL21_NotificationService';
 
 export const useNotesData = () => {
   const [notes, setNotes] = useState([]);
@@ -11,6 +12,7 @@ export const useNotesData = () => {
 
   useEffect(() => {
     loadData();
+    configureNotifications();
   }, []);
 
   const loadData = useCallback(async () => {
@@ -33,7 +35,6 @@ export const useNotesData = () => {
         console.log(`📝 Loaded ${normalized.length} notes`);
         updateWidgetData(normalized);
       } else {
-        // Создаем пример заметки для демонстрации
         const demoNote = {
           id: Date.now().toString(),
           title: 'Пример заметки',
