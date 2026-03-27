@@ -140,6 +140,7 @@ const AppContent = () => {
   
   const handleAddNote = () => {
     if (isSaving) return;
+    console.log('handleAddNote called, currentScreen:', currentScreen);
     
     const newNote = {
       id: Date.now().toString(),
@@ -163,6 +164,8 @@ const AppContent = () => {
     if (isSaving) return;
     setIsSaving(true);
     
+    console.log('handleSaveNote called, isNew:', updatedNote?.isNew);
+    
     try {
       if (Array.isArray(updatedNote)) {
         saveNotes(updatedNote);
@@ -177,7 +180,6 @@ const AppContent = () => {
         ? [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)] 
         : [updatedNote, ...notes];
       
-      // Удаляем флаг isNew перед сохранением
       const notesToSave = newNotes.map(n => {
         const { isNew, ...rest } = n;
         return rest;
@@ -185,7 +187,6 @@ const AppContent = () => {
       
       saveNotes(notesToSave);
       
-      // Очищаем состояние и переходим к списку заметок
       setSelectedNote(null);
       setCurrentScreen('notes');
     } finally {
