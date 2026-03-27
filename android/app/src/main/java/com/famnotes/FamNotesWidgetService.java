@@ -132,8 +132,7 @@ public class FamNotesWidgetService extends RemoteViewsService {
             
             // Настройка открытия заметки при нажатии на элемент списка
             Intent openNoteIntent = new Intent(mContext, MainActivity.class);
-            openNoteIntent.setAction(Intent.ACTION_MAIN);
-            openNoteIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+            openNoteIntent.setAction(Intent.ACTION_VIEW);
             openNoteIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             openNoteIntent.setData(Uri.parse("famnotes://note/" + note.id));
             openNoteIntent.putExtra("open_note_id", note.id);
@@ -144,6 +143,8 @@ public class FamNotesWidgetService extends RemoteViewsService {
                 openNoteIntent, 
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
+            
+            // Устанавливаем PendingIntent на весь элемент (и на заголовок, и на содержимое)
             views.setOnClickPendingIntent(R.id.widget_item_title, pendingIntent);
             views.setOnClickPendingIntent(R.id.widget_item_content, pendingIntent);
             
