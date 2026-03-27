@@ -42,4 +42,28 @@ public class FamNotesWidgetProvider extends AppWidgetProvider {
         }
         super.onUpdate(context, appWidgetManager, appWidgetIds);
     }
+    
+    @Override
+    public void onEnabled(Context context) {
+        super.onEnabled(context);
+    }
+    
+    @Override
+    public void onDisabled(Context context) {
+        super.onDisabled(context);
+    }
+    
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        super.onReceive(context, intent);
+        // Принудительное обновление при получении BOOT_COMPLETED
+        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+            ComponentName componentName = new ComponentName(context, FamNotesWidgetProvider.class);
+            int[] appWidgetIds = appWidgetManager.getAppWidgetIds(componentName);
+            if (appWidgetIds.length > 0) {
+                onUpdate(context, appWidgetManager, appWidgetIds);
+            }
+        }
+    }
 }
