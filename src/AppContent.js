@@ -37,19 +37,27 @@ const AppContent = () => {
           setSelectedNote(note);
           setCurrentScreen('edit');
         }
+      } else if (url && url.includes('famnotes://create')) {
+        console.log('Creating new note from deep link');
+        handleAddNote();
       }
     };
     
     const getInitialUrl = async () => {
       const initialUrl = await Linking.getInitialURL();
       console.log('Initial URL:', initialUrl);
-      if (initialUrl && initialUrl.includes('famnotes://note/')) {
-        const noteId = initialUrl.split('famnotes://note/')[1];
-        const note = notes.find(n => n.id === noteId);
-        if (note) {
-          console.log('Opening note from initial URL:', noteId);
-          setSelectedNote(note);
-          setCurrentScreen('edit');
+      if (initialUrl) {
+        if (initialUrl.includes('famnotes://note/')) {
+          const noteId = initialUrl.split('famnotes://note/')[1];
+          const note = notes.find(n => n.id === noteId);
+          if (note) {
+            console.log('Opening note from initial URL:', noteId);
+            setSelectedNote(note);
+            setCurrentScreen('edit');
+          }
+        } else if (initialUrl.includes('famnotes://create')) {
+          console.log('Creating new note from initial URL');
+          handleAddNote();
         }
       }
     };
@@ -58,12 +66,18 @@ const AppContent = () => {
     
     const subscription = Linking.addEventListener('url', handleDeepLink);
     
-    // Проверяем, не был ли Intent передан при запуске
-    const checkIntent = async () => {
+    return () => {
+      subscription.remove();
+    };
+  }, [notes]);
+
+  // Обработка входящих Intent (для Android) - проверяем getInitialURL повторно после загрузки
+  useEffect(() => {
+    const checkIntentAfterMount = async () => {
       try {
         const initialIntent = await Linking.getInitialURL();
         if (initialIntent && initialIntent.includes('famnotes://create')) {
-          console.log('Creating new note from intent');
+          console.log('Creating new note from intent after mount');
           handleAddNote();
         }
       } catch (e) {
@@ -71,28 +85,10 @@ const AppContent = () => {
       }
     };
     
-    checkIntent();
-    
-    return () => {
-      subscription.remove();
-    };
-  }, [notes]);
-
-  // Обработка входящих Intent (для Android)
-  useEffect(() => {
-    const handleIntent = async () => {
-      try {
-        const initialIntent = await Linking.getInitialURL();
-        if (initialIntent && initialIntent.includes('famnotes://create')) {
-          console.log('Creating new note from intent (second check)');
-          handleAddNote();
-        }
-      } catch (e) {
-        console.log('Intent error:', e);
-      }
-    };
-    
-    handleIntent();
+    // Небольшая задержка для уверенности, что все загрузилось
+    setTimeout(() => {
+      checkIntentAfterMount();
+    }, 500);
   }, []);
 
   // Обработка кнопки "Назад" на Android
