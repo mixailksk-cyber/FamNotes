@@ -21,6 +21,7 @@ const AppContent = () => {
   const [showNoteDialog, setShowNoteDialog] = React.useState(false);
   const [selectedNoteForAction, setSelectedNoteForAction] = React.useState(null);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [isCreatingFromWidget, setIsCreatingFromWidget] = React.useState(false);
   
   const { notes, folders, settings, saveNotes, saveFolders, saveSettings, loadData } = useNotesData();
 
@@ -39,10 +40,8 @@ const AppContent = () => {
         }
       } else if (url && url.includes('famnotes://create')) {
         console.log('Creating new note from widget');
-        // Небольшая задержка для обеспечения стабильности
-        setTimeout(() => {
-          handleAddNote();
-        }, 100);
+        setIsCreatingFromWidget(true);
+        handleAddNote();
       }
     };
     
@@ -59,9 +58,8 @@ const AppContent = () => {
         }
       } else if (initialUrl && initialUrl.includes('famnotes://create')) {
         console.log('Creating new note from initial URL');
-        setTimeout(() => {
-          handleAddNote();
-        }, 100);
+        setIsCreatingFromWidget(true);
+        handleAddNote();
       }
     };
     
@@ -185,6 +183,7 @@ const AppContent = () => {
     saveNotes(notesToSave);
     setCurrentScreen('notes');
     setSelectedNote(null);
+    setIsCreatingFromWidget(false);
   };
   
   const handleMoveNote = (note, targetFolder) => {
