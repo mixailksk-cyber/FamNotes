@@ -28,10 +28,12 @@ const AppContent = () => {
   useEffect(() => {
     const handleDeepLink = (event) => {
       const url = event.url;
+      console.log('Deep link received:', url);
       if (url && url.includes('famnotes://note/')) {
         const noteId = url.split('famnotes://note/')[1];
         const note = notes.find(n => n.id === noteId);
         if (note) {
+          console.log('Opening note from deep link:', noteId);
           setSelectedNote(note);
           setCurrentScreen('edit');
         }
@@ -40,10 +42,12 @@ const AppContent = () => {
     
     const getInitialUrl = async () => {
       const initialUrl = await Linking.getInitialURL();
+      console.log('Initial URL:', initialUrl);
       if (initialUrl && initialUrl.includes('famnotes://note/')) {
         const noteId = initialUrl.split('famnotes://note/')[1];
         const note = notes.find(n => n.id === noteId);
         if (note) {
+          console.log('Opening note from initial URL:', noteId);
           setSelectedNote(note);
           setCurrentScreen('edit');
         }
@@ -59,79 +63,7 @@ const AppContent = () => {
     };
   }, [notes]);
 
-  // Обработка входящих intent (для Android)
-  useEffect(() => {
-    const handleIntent = async () => {
-      try {
-        const initialIntent = await Linking.getInitialURL();
-        if (initialIntent && initialIntent.includes('famnotes://note/')) {
-          const noteId = initialIntent.split('famnotes://note/')[1];
-          const note = notes.find(n => n.id === noteId);
-          if (note) {
-            setSelectedNote(note);
-            setCurrentScreen('edit');
-          }
-        }
-      } catch (e) {
-        console.log('Intent error:', e);
-      }
-    };
-    
-    handleIntent();
-  }, [notes]);
-
-  // Обработка кнопки "Назад" на Android
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (showNoteDialog) {
-        setShowNoteDialog(false);
-        setSelectedNoteForAction(null);
-        return true;
-      }
-      
-      if (currentScreen === 'edit' && navigationStack[navigationStack.length - 1] === 'search') {
-        setCurrentScreen('search');
-        setSelectedNote(null);
-        setNavigationStack(prev => prev.slice(0, -1));
-        return true;
-      }
-      
-      if (currentScreen === 'edit') {
-        setCurrentScreen('notes');
-        setSelectedNote(null);
-        setNavigationStack(prev => prev.slice(0, -1));
-        return true;
-      }
-      
-      if (currentScreen === 'search') {
-        setCurrentScreen('notes');
-        setSearchQuery('');
-        setNavigationStack(prev => prev.slice(0, -1));
-        return true;
-      }
-      
-      if (currentScreen === 'folders') {
-        setCurrentScreen('notes');
-        setNavigationStack(prev => prev.slice(0, -1));
-        return true;
-      }
-      
-      if (currentScreen === 'settings') {
-        setCurrentScreen('notes');
-        setNavigationStack(prev => prev.slice(0, -1));
-        return true;
-      }
-      
-      if (currentScreen === 'notes' && currentFolder !== 'Главная') {
-        setCurrentFolder('Главная');
-        return true;
-      }
-      
-      return false;
-    });
-    
-    return () => backHandler.remove();
-  }, [currentScreen, currentFolder, navigationStack, showNoteDialog]);
+  // Обработка остальной части приложения...
   
   const filteredNotes = React.useMemo(() => {
     if (currentFolder === 'Корзина') {
@@ -183,7 +115,6 @@ const AppContent = () => {
       ? [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)] 
       : [updatedNote, ...notes];
     
-    // Удаляем флаг isNew перед сохранением
     const notesToSave = newNotes.map(n => {
       const { isNew, ...rest } = n;
       return rest;
