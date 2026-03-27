@@ -52,7 +52,7 @@ public class WidgetDataModule extends ReactContextBaseJavaModule {
                     views.setRemoteAdapter(R.id.widget_list, intent);
                     views.setEmptyView(R.id.widget_list, android.R.id.empty);
                     
-                    // Настройка открытия приложения при нажатии на виджет
+                    // Настройка открытия приложения при нажатии на пустую область виджета
                     android.content.Intent openAppIntent = new android.content.Intent(reactContext, MainActivity.class);
                     openAppIntent.setAction(android.content.Intent.ACTION_MAIN);
                     openAppIntent.addCategory(android.content.Intent.CATEGORY_LAUNCHER);
