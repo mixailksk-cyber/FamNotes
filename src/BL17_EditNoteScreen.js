@@ -201,7 +201,7 @@ const EditNoteScreen = ({
             <TextInput 
               ref={contentInputRef}
               style={{ fontSize: settings.fontSize, paddingHorizontal: 16, paddingVertical: 12, textAlignVertical: 'top', color: '#333', minHeight: 200, lineHeight: settings.fontSize * 1.5 }} 
-              placeholder="Текст заметки..." 
+              placeholder="Текст заметки" 
               placeholderTextColor="#999" 
               multiline 
               maxLength={NOTE_MAX_LENGTH} 
