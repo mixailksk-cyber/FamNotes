@@ -39,11 +39,11 @@ const EditNoteScreen = ({
   
   const isInTrash = note.folder === 'Корзина' || note.deleted === true;
 
-  // Для новой заметки: фокус в поле текста
+  // Для новой заметки: фокус в поле заголовка
   useEffect(() => {
-    if (isNewNote && contentInputRef.current) {
+    if (isNewNote && titleInputRef.current) {
       setTimeout(() => {
-        contentInputRef.current.focus();
+        titleInputRef.current.focus();
       }, 100);
     }
   }, [isNewNote]);
@@ -167,7 +167,7 @@ const EditNoteScreen = ({
   
   // Кнопка поднимается над клавиатурой с отступом -70 (поднимается на 70px выше)
   const buttonBottom = keyboardVisible 
-    ? Math.max(0, keyboardHeight - 70)
+    ? Math.max(0, keyboardHeight - 50)
     : insets.bottom + 24;
 
   return (
