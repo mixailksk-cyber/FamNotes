@@ -67,7 +67,6 @@ public class FamNotesWidgetService extends RemoteViewsService {
                     mNotes.add(item);
                 }
                 
-                // Сортировка: сначала закрепленные, потом по дате обновления
                 Collections.sort(mNotes, new Comparator<WidgetNoteItem>() {
                     @Override
                     public int compare(WidgetNoteItem a, WidgetNoteItem b) {
@@ -101,7 +100,6 @@ public class FamNotesWidgetService extends RemoteViewsService {
             WidgetNoteItem note = mNotes.get(position);
             RemoteViews views = new RemoteViews(mContext.getPackageName(), R.layout.widget_list_item);
             
-            // Заголовок
             if (note.title != null && !note.title.isEmpty()) {
                 views.setTextViewText(R.id.widget_item_title, note.title);
                 views.setViewVisibility(R.id.widget_item_title, android.view.View.VISIBLE);
@@ -109,7 +107,6 @@ public class FamNotesWidgetService extends RemoteViewsService {
                 views.setViewVisibility(R.id.widget_item_title, android.view.View.GONE);
             }
             
-            // Содержимое
             if (note.content != null && !note.content.isEmpty()) {
                 String shortContent = note.content.length() > 60 ? note.content.substring(0, 60) + "..." : note.content;
                 views.setTextViewText(R.id.widget_item_content, shortContent);
@@ -118,16 +115,11 @@ public class FamNotesWidgetService extends RemoteViewsService {
                 views.setViewVisibility(R.id.widget_item_content, android.view.View.GONE);
             }
             
-            // Если нет ни заголовка, ни содержимого
             if ((note.title == null || note.title.isEmpty()) && (note.content == null || note.content.isEmpty())) {
                 views.setTextViewText(R.id.widget_item_title, "Без названия");
                 views.setViewVisibility(R.id.widget_item_title, android.view.View.VISIBLE);
                 views.setViewVisibility(R.id.widget_item_content, android.view.View.GONE);
             }
-            
-            // Отключаем кликабельность отдельных элементов, чтобы клик уходил на контейнер
-            views.setOnClickPendingIntent(R.id.widget_item_title, null);
-            views.setOnClickPendingIntent(R.id.widget_item_content, null);
             
             return views;
         }
