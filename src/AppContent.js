@@ -143,7 +143,7 @@ const AppContent = () => {
   const isInTrash = currentFolder === 'Корзина';
   
   const handleAddNote = () => {
-    console.log('handleAddNote called');
+    console.log('🔵 handleAddNote called');
     const newNote = {
       id: Date.now().toString(),
       title: '',
@@ -163,10 +163,11 @@ const AppContent = () => {
   };
   
   const handleSaveNote = (updatedNote) => {
-    console.log('handleSaveNote called, isNew:', updatedNote?.isNew);
+    console.log('🟢 handleSaveNote called, updatedNote:', { id: updatedNote?.id, isNew: updatedNote?.isNew, title: updatedNote?.title });
     
     if (Array.isArray(updatedNote)) {
       saveNotes(updatedNote);
+      console.log('🟢 Saved array, length:', updatedNote.length);
       return;
     }
     
@@ -183,9 +184,11 @@ const AppContent = () => {
       return rest;
     });
     
+    console.log('🟢 Saving note, notes count:', notesToSave.length);
     saveNotes(notesToSave);
     
     // Важно: сначала обнуляем selectedNote, потом меняем экран
+    console.log('🟢 Setting selectedNote to null, changing screen to notes');
     setSelectedNote(null);
     setCurrentScreen('notes');
   };
@@ -422,6 +425,7 @@ const AppContent = () => {
   
   // Определяем, является ли заметка новой
   const isSelectedNoteNew = selectedNote && selectedNote.isNew === true;
+  console.log('🔵 Current screen:', currentScreen, 'selectedNote:', selectedNote?.id, 'isNew:', isSelectedNoteNew);
   
   switch (currentScreen) {
     case 'notes':
@@ -461,6 +465,7 @@ const AppContent = () => {
         />
       );
     case 'edit':
+      console.log('🔵 Rendering EditNoteScreen with isNewNote:', isSelectedNoteNew);
       return (
         <EditNoteScreen 
           selectedNote={selectedNote}
