@@ -21,7 +21,6 @@ const AppContent = () => {
   const [showNoteDialog, setShowNoteDialog] = React.useState(false);
   const [selectedNoteForAction, setSelectedNoteForAction] = React.useState(null);
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [isCreatingFromWidget, setIsCreatingFromWidget] = React.useState(false);
   
   const { notes, folders, settings, saveNotes, saveFolders, saveSettings, loadData } = useNotesData();
 
@@ -38,10 +37,6 @@ const AppContent = () => {
           setSelectedNote(note);
           setCurrentScreen('edit');
         }
-      } else if (url && url.includes('famnotes://create')) {
-        console.log('Creating new note from widget');
-        setIsCreatingFromWidget(true);
-        handleAddNote();
       }
     };
     
@@ -56,10 +51,6 @@ const AppContent = () => {
           setSelectedNote(note);
           setCurrentScreen('edit');
         }
-      } else if (initialUrl && initialUrl.includes('famnotes://create')) {
-        console.log('Creating new note from initial URL');
-        setIsCreatingFromWidget(true);
-        handleAddNote();
       }
     };
     
@@ -67,10 +58,42 @@ const AppContent = () => {
     
     const subscription = Linking.addEventListener('url', handleDeepLink);
     
+    // Проверяем, не был ли Intent передан при запуске
+    const checkIntent = async () => {
+      try {
+        const initialIntent = await Linking.getInitialURL();
+        if (initialIntent && initialIntent.includes('famnotes://create')) {
+          console.log('Creating new note from intent');
+          handleAddNote();
+        }
+      } catch (e) {
+        console.log('Intent check error:', e);
+      }
+    };
+    
+    checkIntent();
+    
     return () => {
       subscription.remove();
     };
   }, [notes]);
+
+  // Обработка входящих Intent (для Android)
+  useEffect(() => {
+    const handleIntent = async () => {
+      try {
+        const initialIntent = await Linking.getInitialURL();
+        if (initialIntent && initialIntent.includes('famnotes://create')) {
+          console.log('Creating new note from intent (second check)');
+          handleAddNote();
+        }
+      } catch (e) {
+        console.log('Intent error:', e);
+      }
+    };
+    
+    handleIntent();
+  }, []);
 
   // Обработка кнопки "Назад" на Android
   useEffect(() => {
@@ -144,6 +167,7 @@ const AppContent = () => {
   const isInTrash = currentFolder === 'Корзина';
   
   const handleAddNote = () => {
+    console.log('handleAddNote called');
     const newNote = {
       id: Date.now().toString(),
       title: '',
@@ -183,7 +207,6 @@ const AppContent = () => {
     saveNotes(notesToSave);
     setCurrentScreen('notes');
     setSelectedNote(null);
-    setIsCreatingFromWidget(false);
   };
   
   const handleMoveNote = (note, targetFolder) => {
