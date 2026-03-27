@@ -99,7 +99,7 @@ const SettingsScreen = ({
         
         Alert.alert(
           '✅ Резервная копия создана',
-          `Файл: ${fileName}\nРазмер: ${(fileInfo.size / 1024).toFixed(2)} KB\n\nСохранено в папку "Downloads" (Загрузки)`,
+          `Файл: ${fileName}\nРазмер: ${(fileInfo.size / 1024).toFixed(2)} KB\n\nСохранено в папку "Загрузки"`,
           [
             { 
               text: 'OK', 
@@ -353,9 +353,6 @@ const SettingsScreen = ({
               )}
             </TouchableOpacity>
           </View>
-          <Text style={{ color: '#999', fontSize: 12, marginTop: 8, textAlign: 'center' }}>
-            Копия сохраняется в папку "Downloads" (Загрузки)
-          </Text>
         </View>
       </ScrollView>
     </View>
