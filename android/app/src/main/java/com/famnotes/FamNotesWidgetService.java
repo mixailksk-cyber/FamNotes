@@ -139,12 +139,12 @@ public class FamNotesWidgetService extends RemoteViewsService {
             
             PendingIntent pendingIntent = PendingIntent.getActivity(
                 mContext, 
-                position, 
+                0, 
                 openNoteIntent, 
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
             
-            // Устанавливаем PendingIntent на весь элемент (и на заголовок, и на содержимое)
+            // Устанавливаем PendingIntent на весь элемент
             views.setOnClickPendingIntent(R.id.widget_item_title, pendingIntent);
             views.setOnClickPendingIntent(R.id.widget_item_content, pendingIntent);
             
