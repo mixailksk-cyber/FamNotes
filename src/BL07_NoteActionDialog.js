@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Modal, Animated, Platform, Alert, ScrollView, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Animated, Platform, Alert, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { width, getBrandColor } from './BL02_Constants';
-
-const { height: screenHeight } = Dimensions.get('window');
 
 const NoteActionDialog = ({ 
   visible, 
@@ -29,6 +28,8 @@ const NoteActionDialog = ({
       .map(f => typeof f === 'object' ? f.name : f);
   }, [folders, currentFolder]);
   
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tempDate, setTempDate] = useState(reminderTime ? new Date(reminderTime) : new Date());
   const [fadeAnim] = React.useState(new Animated.Value(0));
   const [scaleAnim] = React.useState(new Animated.Value(0.9));
   
@@ -55,12 +56,6 @@ const NoteActionDialog = ({
   
   const brandColor = getBrandColor(settings);
   
-  // Расчет высоты для папок
-  const folderItemHeight = 52; // примерная высота одного элемента папки
-  const maxFolderHeight = screenHeight * 0.4; // максимум 40% экрана
-  const folderScrollHeight = Math.min(availableFolders.length * folderItemHeight, maxFolderHeight);
-  const needScroll = availableFolders.length * folderItemHeight > maxFolderHeight;
-  
   const formatReminderTime = (timestamp) => {
     if (!timestamp) return null;
     const date = new Date(timestamp);
@@ -71,91 +66,16 @@ const NoteActionDialog = ({
     return `${day}.${month} ${hours}:${minutes}`;
   };
   
-  const showDateTimePicker = () => {
-    Alert.alert(
-      'Установить напоминание',
-      'Выберите дату и время',
-      [
-        { text: 'Отмена', style: 'cancel' },
-        {
-          text: 'Через 10 минут',
-          onPress: () => onSetReminder(Date.now() + 10 * 60 * 1000)
-        },
-        {
-          text: 'Через 30 минут',
-          onPress: () => onSetReminder(Date.now() + 30 * 60 * 1000)
-        },
-        {
-          text: 'Через 1 час',
-          onPress: () => onSetReminder(Date.now() + 60 * 60 * 1000)
-        },
-        {
-          text: 'Через 2 часа',
-          onPress: () => onSetReminder(Date.now() + 2 * 60 * 60 * 1000)
-        },
-        {
-          text: 'Завтра в 9:00',
-          onPress: () => {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(9, 0, 0, 0);
-            onSetReminder(tomorrow.getTime());
-          }
-        },
-        {
-          text: 'Завтра в 18:00',
-          onPress: () => {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(18, 0, 0, 0);
-            onSetReminder(tomorrow.getTime());
-          }
-        },
-        {
-          text: 'Выбрать дату и время',
-          onPress: () => {
-            Alert.prompt(
-              'Введите дату и время',
-              'Формат: ДД.ММ.ГГГГ ЧЧ:ММ\nПример: 25.03.2026 14:30',
-              [
-                { text: 'Отмена', style: 'cancel' },
-                {
-                  text: 'Установить',
-                  onPress: (input) => {
-                    if (input) {
-                      const parts = input.split(' ');
-                      if (parts.length === 2) {
-                        const dateParts = parts[0].split('.');
-                        const timeParts = parts[1].split(':');
-                        if (dateParts.length === 3 && timeParts.length === 2) {
-                          const date = new Date(
-                            parseInt(dateParts[2]),
-                            parseInt(dateParts[1]) - 1,
-                            parseInt(dateParts[0]),
-                            parseInt(timeParts[0]),
-                            parseInt(timeParts[1])
-                          );
-                          if (!isNaN(date.getTime()) && date > new Date()) {
-                            onSetReminder(date.getTime());
-                          } else {
-                            Alert.alert('Ошибка', 'Неверная дата или дата в прошлом');
-                          }
-                        } else {
-                          Alert.alert('Ошибка', 'Неверный формат');
-                        }
-                      } else {
-                        Alert.alert('Ошибка', 'Используйте формат: ДД.ММ.ГГГГ ЧЧ:ММ');
-                      }
-                    }
-                  }
-                }
-              ],
-              'plain-text'
-            );
-          }
-        }
-      ]
-    );
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setTempDate(selectedDate);
+      onSetReminder(selectedDate.getTime());
+    }
+  };
+  
+  const openDateTimePicker = () => {
+    setShowDatePicker(true);
   };
   
   if (!visible) return null;
@@ -174,7 +94,7 @@ const NoteActionDialog = ({
           padding: 20, 
           borderRadius: 10, 
           width: width - 40,
-          maxHeight: screenHeight * 0.85,
+          maxHeight: '85%',
           transform: [{ scale: scaleAnim }]
         }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, textAlign: 'center', color: brandColor }}>
@@ -202,7 +122,7 @@ const NoteActionDialog = ({
               </TouchableOpacity>
               
               <TouchableOpacity 
-                onPress={showDateTimePicker} 
+                onPress={openDateTimePicker} 
                 style={{ 
                   flex: 1,
                   padding: 12, 
@@ -234,35 +154,21 @@ const NoteActionDialog = ({
             </TouchableOpacity>
           )}
           
-          {/* Перемещение в папки - скролл только если не вмещаются */}
+          {/* Перемещение в папки (для всех заметок, включая корзину) */}
           {availableFolders.length > 0 && (
             <>
               <Text style={{ marginBottom: 8, color: '#666', marginTop: 8 }}>Переместить в папку:</Text>
-              {needScroll ? (
-                <ScrollView style={{ maxHeight: folderScrollHeight }}>
-                  {availableFolders.map((n, i) => (
-                    <TouchableOpacity 
-                      key={i} 
-                      onPress={() => { onMove(n); onClose(); }} 
-                      style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#E0E0E0', flexDirection: 'row', alignItems: 'center' }}>
-                      <Icon name="folder" size={20} color="#666" style={{ marginRight: 12 }} />
-                      <Text style={{ fontSize: 16, color: '#333' }}>{n}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              ) : (
-                <View>
-                  {availableFolders.map((n, i) => (
-                    <TouchableOpacity 
-                      key={i} 
-                      onPress={() => { onMove(n); onClose(); }} 
-                      style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#E0E0E0', flexDirection: 'row', alignItems: 'center' }}>
-                      <Icon name="folder" size={20} color="#666" style={{ marginRight: 12 }} />
-                      <Text style={{ fontSize: 16, color: '#333' }}>{n}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
+              <ScrollView style={{ maxHeight: 200 }}>
+                {availableFolders.map((n, i) => (
+                  <TouchableOpacity 
+                    key={i} 
+                    onPress={() => { onMove(n); onClose(); }} 
+                    style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#E0E0E0', flexDirection: 'row', alignItems: 'center' }}>
+                    <Icon name="folder" size={20} color="#666" style={{ marginRight: 12 }} />
+                    <Text style={{ fontSize: 16, color: '#333' }}>{n}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </>
           )}
           
@@ -314,6 +220,16 @@ const NoteActionDialog = ({
           </TouchableOpacity>
         </Animated.View>
       </Animated.View>
+      
+      {showDatePicker && (
+        <DateTimePicker
+          value={tempDate}
+          mode="datetime"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleDateChange}
+          minimumDate={new Date()}
+        />
+      )}
     </Modal>
   );
 };
