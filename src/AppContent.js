@@ -59,6 +59,27 @@ const AppContent = () => {
     };
   }, [notes]);
 
+  // Обработка входящих intent (для Android)
+  useEffect(() => {
+    const handleIntent = async () => {
+      try {
+        const initialIntent = await Linking.getInitialURL();
+        if (initialIntent && initialIntent.includes('famnotes://note/')) {
+          const noteId = initialIntent.split('famnotes://note/')[1];
+          const note = notes.find(n => n.id === noteId);
+          if (note) {
+            setSelectedNote(note);
+            setCurrentScreen('edit');
+          }
+        }
+      } catch (e) {
+        console.log('Intent error:', e);
+      }
+    };
+    
+    handleIntent();
+  }, [notes]);
+
   // Обработка кнопки "Назад" на Android
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
