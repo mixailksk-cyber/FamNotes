@@ -139,7 +139,7 @@ public class FamNotesWidgetService extends RemoteViewsService {
             
             PendingIntent pendingIntent = PendingIntent.getActivity(
                 mContext, 
-                0, 
+                position, 
                 openNoteIntent, 
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
