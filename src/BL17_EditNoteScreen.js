@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Share, ScrollView, StatusBar } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Share, ScrollView, TouchableWithoutFeedback } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Header from './BL04_Header';
 import ColorPickerModal from './BL08_ColorPickerModal';
@@ -138,6 +138,13 @@ const EditNoteScreen = ({
     }
   };
 
+  // Функция для фокуса на поле содержимого при нажатии на пустую область
+  const handleContentPress = () => {
+    if (isEditing && !isInTrash && contentInputRef.current) {
+      contentInputRef.current.focus();
+    }
+  };
+
   const headerColor = note.color || brandColor;
 
   return (
@@ -198,22 +205,27 @@ const EditNoteScreen = ({
           </View>
 
           {isEditing && !isInTrash ? (
-            <TextInput 
-              ref={contentInputRef}
-              style={{ fontSize: settings.fontSize, paddingHorizontal: 16, paddingVertical: 12, textAlignVertical: 'top', color: '#333', minHeight: 200, lineHeight: settings.fontSize * 1.5 }} 
-              placeholder="Текст заметки" 
-              placeholderTextColor="#999" 
-              multiline 
-              maxLength={NOTE_MAX_LENGTH} 
-              value={note.content} 
-              onChangeText={t => setNote({ ...note, content: t })}
-              editable={!isInTrash && isEditing}
-              scrollEnabled={true}
-            />
+            <TouchableWithoutFeedback onPress={handleContentPress}>
+              <View style={{ minHeight: 200 }}>
+                <TextInput 
+                  ref={contentInputRef}
+                  style={{ fontSize: settings.fontSize, paddingHorizontal: 16, paddingVertical: 12, textAlignVertical: 'top', color: '#333', minHeight: 200, lineHeight: settings.fontSize * 1.5 }} 
+                  placeholder="Текст заметки..." 
+                  placeholderTextColor="#999" 
+                  multiline 
+                  maxLength={NOTE_MAX_LENGTH} 
+                  value={note.content} 
+                  onChangeText={t => setNote({ ...note, content: t })}
+                  editable={!isInTrash && isEditing}
+                  scrollEnabled={true}
+                />
+              </View>
+            </TouchableWithoutFeedback>
           ) : (
             <Text 
               selectable={true}
               style={{ fontSize: settings.fontSize, paddingHorizontal: 16, paddingVertical: 12, color: '#333', lineHeight: settings.fontSize * 1.5 }}
+              onPress={handleEditPress}
             >
               {note.content || '...'}
             </Text>
