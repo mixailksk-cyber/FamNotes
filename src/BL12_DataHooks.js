@@ -12,6 +12,7 @@ export const useNotesData = () => {
 
   useEffect(() => {
     loadData();
+    // Настройка уведомлений с запросом разрешения
     configureNotifications();
   }, []);
 
