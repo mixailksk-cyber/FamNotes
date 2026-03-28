@@ -1,23 +1,36 @@
 import PushNotification from 'react-native-push-notification';
-import { Platform, PermissionsAndroid } from 'react-native';
+import { Platform, PermissionsAndroid, Alert } from 'react-native';
 
 export const configureNotifications = async () => {
-  // Запрос разрешения на Android
+  // Запрос разрешения на Android 13+
   if (Platform.OS === 'android') {
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-        {
-          title: 'Разрешение на уведомления',
-          message: 'FamNotes нужно отправлять уведомления о напоминаниях',
-          buttonNeutral: 'Спросить позже',
-          buttonNegative: 'Запретить',
-          buttonPositive: 'Разрешить',
+    if (Platform.Version >= 33) { // Android 13 (API 33) и выше
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+          {
+            title: 'Разрешение на уведомления',
+            message: 'FamNotes нужно отправлять уведомления о напоминаниях',
+            buttonNeutral: 'Спросить позже',
+            buttonNegative: 'Запретить',
+            buttonPositive: 'Разрешить',
+          }
+        );
+        console.log('Notification permission:', granted);
+        
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('✅ Notification permission granted');
+        } else {
+          console.log('❌ Notification permission denied');
+          Alert.alert(
+            'Уведомления отключены',
+            'Для получения напоминаний включите уведомления в настройках приложения',
+            [{ text: 'OK' }]
+          );
         }
-      );
-      console.log('Notification permission:', granted);
-    } catch (err) {
-      console.warn(err);
+      } catch (err) {
+        console.warn('Permission request error:', err);
+      }
     }
   }
   
@@ -42,6 +55,22 @@ export const configureNotifications = async () => {
     popInitialNotification: true,
     requestPermissions: Platform.OS === 'ios',
   });
+  
+  // Создаем канал уведомлений (для Android 8+)
+  if (Platform.OS === 'android') {
+    PushNotification.createChannel(
+      {
+        channelId: 'famnotes_channel',
+        channelName: 'FamNotes Reminders',
+        channelDescription: 'Notifications for note reminders',
+        importance: 5, // HIGH
+        vibrate: true,
+        playSound: true,
+        soundName: 'default',
+      },
+      (created) => console.log(`Channel created: ${created}`)
+    );
+  }
 };
 
 export const scheduleReminder = (noteId, title, content, date) => {
@@ -51,7 +80,7 @@ export const scheduleReminder = (noteId, title, content, date) => {
   // Проверяем, что дата в будущем
   if (notificationDate <= now) {
     console.log('Cannot schedule reminder in the past');
-    return;
+    return false;
   }
   
   console.log('Scheduling reminder for:', notificationDate);
@@ -70,9 +99,10 @@ export const scheduleReminder = (noteId, title, content, date) => {
     importance: 'high',
     priority: 'high',
     visibility: 'public',
-    // Для Android 12+ нужен exact alarm
     exact: true,
   });
+  
+  return true;
 };
 
 export const cancelReminder = (noteId) => {
