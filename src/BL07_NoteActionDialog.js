@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Modal, Animated, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Animated, Alert, ScrollView, TextInput } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { width, getBrandColor } from './BL02_Constants';
 
 const NoteActionDialog = ({ 
@@ -30,11 +29,8 @@ const NoteActionDialog = ({
   
   const [fadeAnim] = React.useState(new Animated.Value(0));
   const [scaleAnim] = React.useState(new Animated.Value(0.9));
-  
-  // Состояния для DateTimePicker
-  const [showDatePicker, setShowDatePicker] = React.useState(false);
-  const [showTimePicker, setShowTimePicker] = React.useState(false);
-  const [tempDate, setTempDate] = React.useState(new Date());
+  const [showDateInput, setShowDateInput] = React.useState(false);
+  const [dateInputValue, setDateInputValue] = React.useState('');
   
   React.useEffect(() => {
     if (visible) {
@@ -54,6 +50,8 @@ const NoteActionDialog = ({
     } else {
       fadeAnim.setValue(0);
       scaleAnim.setValue(0.9);
+      setShowDateInput(false);
+      setDateInputValue('');
     }
   }, [visible]);
   
@@ -69,36 +67,56 @@ const NoteActionDialog = ({
     return `${day}.${month} ${hours}:${minutes}`;
   };
   
-  const showDateTimePicker = () => {
-    setTempDate(new Date());
-    setShowDatePicker(true);
-  };
-  
-  const onDateChange = (event, selectedDate) => {
-    if (event.type === 'set') {
-      const currentDate = selectedDate || tempDate;
-      setTempDate(currentDate);
-      setShowDatePicker(false);
-      setShowTimePicker(true);
-    } else {
-      // Пользователь нажал "Отмена"
-      setShowDatePicker(false);
+  const handleSetReminder = () => {
+    if (!dateInputValue || !dateInputValue.trim()) {
+      Alert.alert('Ошибка', 'Введите дату и время');
+      return;
     }
-  };
-  
-  const onTimeChange = (event, selectedTime) => {
-    setShowTimePicker(false);
     
-    if (event.type === 'set' && selectedTime) {
-      const finalDate = selectedTime;
-      
-      if (finalDate > new Date()) {
-        onSetReminder(finalDate.getTime());
-        onClose();
-      } else {
-        Alert.alert('Ошибка', 'Дата и время должны быть в будущем');
-      }
+    const input = dateInputValue.trim();
+    const parts = input.split(' ');
+    
+    if (parts.length !== 2) {
+      Alert.alert('Ошибка', 'Используйте формат: ДД.ММ.ГГГГ ЧЧ:ММ');
+      return;
     }
+    
+    const dateParts = parts[0].split('.');
+    const timeParts = parts[1].split(':');
+    
+    if (dateParts.length !== 3 || timeParts.length !== 2) {
+      Alert.alert('Ошибка', 'Используйте формат: ДД.ММ.ГГГГ ЧЧ:ММ');
+      return;
+    }
+    
+    const year = parseInt(dateParts[2]);
+    const month = parseInt(dateParts[1]) - 1;
+    const day = parseInt(dateParts[0]);
+    const hour = parseInt(timeParts[0]);
+    const minute = parseInt(timeParts[1]);
+    
+    if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) {
+      Alert.alert('Ошибка', 'Введите корректные числа');
+      return;
+    }
+    
+    const date = new Date(year, month, day, hour, minute);
+    
+    if (isNaN(date.getTime())) {
+      Alert.alert('Ошибка', 'Неверный формат даты');
+    } else if (date <= new Date()) {
+      Alert.alert('Ошибка', 'Дата и время должны быть в будущем');
+    } else {
+      onSetReminder(date.getTime());
+      setShowDateInput(false);
+      setDateInputValue('');
+      onClose();
+    }
+  };
+  
+  const showDateTimePicker = () => {
+    setShowDateInput(true);
+    setDateInputValue('');
   };
   
   if (!visible) return null;
@@ -244,27 +262,60 @@ const NoteActionDialog = ({
         </Animated.View>
       </Animated.View>
       
-      {/* DatePicker */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={tempDate}
-          mode="date"
-          display="default"
-          onChange={onDateChange}
-          minimumDate={new Date()}
-        />
-      )}
-      
-      {/* TimePicker */}
-      {showTimePicker && (
-        <DateTimePicker
-          value={tempDate}
-          mode="time"
-          display="default"
-          onChange={onTimeChange}
-          is24Hour={true}
-        />
-      )}
+      {/* Модальное окно для ввода даты и времени */}
+      <Modal visible={showDateInput} transparent animationType="fade" onRequestClose={() => setShowDateInput(false)}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, width: width - 40 }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, textAlign: 'center', color: brandColor }}>
+              Установить напоминание
+            </Text>
+            
+            <Text style={{ marginBottom: 8, color: '#666' }}>
+              Введите дату и время в формате:
+            </Text>
+            <Text style={{ marginBottom: 16, color: brandColor, fontWeight: 'bold' }}>
+              ДД.ММ.ГГГГ ЧЧ:ММ
+            </Text>
+            <Text style={{ marginBottom: 8, color: '#999', fontSize: 12 }}>
+              Пример: 25.03.2026 14:30
+            </Text>
+            
+            <TextInput
+              style={{
+                borderWidth: 1,
+                borderColor: '#E0E0E0',
+                borderRadius: 8,
+                padding: 12,
+                fontSize: 16,
+                marginBottom: 20,
+                backgroundColor: '#F5F5F5'
+              }}
+              placeholder="25.03.2026 14:30"
+              value={dateInputValue}
+              onChangeText={setDateInputValue}
+              autoFocus
+              keyboardType="default"
+            />
+            
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+              <TouchableOpacity 
+                onPress={() => {
+                  setShowDateInput(false);
+                  setDateInputValue('');
+                }} 
+                style={{ padding: 12 }}>
+                <Text style={{ color: '#999', fontSize: 16 }}>Отмена</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={handleSetReminder} 
+                style={{ padding: 12 }}>
+                <Text style={{ color: brandColor, fontWeight: 'bold', fontSize: 16 }}>Установить</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   );
 };
