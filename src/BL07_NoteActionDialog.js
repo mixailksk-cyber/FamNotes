@@ -64,90 +64,118 @@ const NoteActionDialog = ({
   };
   
   const showDateTimePicker = () => {
-    Alert.alert(
-      'Установить напоминание',
-      'Выберите дату и время',
-      [
-        { text: 'Отмена', style: 'cancel' },
-        {
-          text: 'Через 10 минут',
-          onPress: () => onSetReminder(Date.now() + 10 * 60 * 1000)
-        },
-        {
-          text: 'Через 30 минут',
-          onPress: () => onSetReminder(Date.now() + 30 * 60 * 1000)
-        },
-        {
-          text: 'Через 1 час',
-          onPress: () => onSetReminder(Date.now() + 60 * 60 * 1000)
-        },
-        {
-          text: 'Через 2 часа',
-          onPress: () => onSetReminder(Date.now() + 2 * 60 * 60 * 1000)
-        },
-        {
-          text: 'Завтра в 9:00',
-          onPress: () => {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(9, 0, 0, 0);
-            onSetReminder(tomorrow.getTime());
-          }
-        },
-        {
-          text: 'Завтра в 18:00',
-          onPress: () => {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(18, 0, 0, 0);
-            onSetReminder(tomorrow.getTime());
-          }
-        },
-        {
-          text: 'Выбрать дату и время',
-          onPress: () => {
-            Alert.prompt(
-              'Введите дату и время',
-              'Формат: ДД.ММ.ГГГГ ЧЧ:ММ\nПример: 25.03.2026 14:30',
-              [
-                { text: 'Отмена', style: 'cancel' },
-                {
-                  text: 'Установить',
-                  onPress: (input) => {
-                    if (input) {
-                      const parts = input.split(' ');
-                      if (parts.length === 2) {
-                        const dateParts = parts[0].split('.');
-                        const timeParts = parts[1].split(':');
-                        if (dateParts.length === 3 && timeParts.length === 2) {
-                          const date = new Date(
-                            parseInt(dateParts[2]),
-                            parseInt(dateParts[1]) - 1,
-                            parseInt(dateParts[0]),
-                            parseInt(timeParts[0]),
-                            parseInt(timeParts[1])
-                          );
-                          if (!isNaN(date.getTime()) && date > new Date()) {
-                            onSetReminder(date.getTime());
+    if (Platform.OS === 'android') {
+      // Для Android используем системный DatePicker и TimePicker через Alert
+      Alert.alert(
+        'Установить напоминание',
+        'Выберите дату и время',
+        [
+          { text: 'Отмена', style: 'cancel' },
+          {
+            text: 'Выбрать дату и время',
+            onPress: () => {
+              // Сначала запрашиваем дату через текстовый ввод (простой вариант)
+              // В реальном приложении лучше использовать react-native-datetimepicker
+              Alert.prompt(
+                'Введите дату и время',
+                'Формат: ДД.ММ.ГГГГ ЧЧ:ММ\nПример: 25.03.2026 14:30\n\nТакже доступны быстрые варианты:',
+                [
+                  { text: 'Отмена', style: 'cancel' },
+                  {
+                    text: 'Через 1 час',
+                    onPress: () => onSetReminder(Date.now() + 60 * 60 * 1000)
+                  },
+                  {
+                    text: 'Через 3 часа',
+                    onPress: () => onSetReminder(Date.now() + 3 * 60 * 60 * 1000)
+                  },
+                  {
+                    text: 'Завтра 09:00',
+                    onPress: () => {
+                      const tomorrow = new Date();
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      tomorrow.setHours(9, 0, 0, 0);
+                      onSetReminder(tomorrow.getTime());
+                    }
+                  },
+                  {
+                    text: 'Выбрать вручную',
+                    onPress: (input) => {
+                      if (input) {
+                        const parts = input.split(' ');
+                        if (parts.length === 2) {
+                          const dateParts = parts[0].split('.');
+                          const timeParts = parts[1].split(':');
+                          if (dateParts.length === 3 && timeParts.length === 2) {
+                            const date = new Date(
+                              parseInt(dateParts[2]),
+                              parseInt(dateParts[1]) - 1,
+                              parseInt(dateParts[0]),
+                              parseInt(timeParts[0]),
+                              parseInt(timeParts[1])
+                            );
+                            if (!isNaN(date.getTime()) && date > new Date()) {
+                              onSetReminder(date.getTime());
+                            } else {
+                              Alert.alert('Ошибка', 'Неверная дата или дата в прошлом');
+                            }
                           } else {
-                            Alert.alert('Ошибка', 'Неверная дата или дата в прошлом');
+                            Alert.alert('Ошибка', 'Неверный формат');
                           }
                         } else {
-                          Alert.alert('Ошибка', 'Неверный формат');
+                          Alert.alert('Ошибка', 'Используйте формат: ДД.ММ.ГГГГ ЧЧ:ММ');
                         }
-                      } else {
-                        Alert.alert('Ошибка', 'Используйте формат: ДД.ММ.ГГГГ ЧЧ:ММ');
                       }
                     }
                   }
-                }
-              ],
-              'plain-text'
-            );
+                ],
+                'plain-text'
+              );
+            }
           }
-        }
-      ]
-    );
+        ]
+      );
+    } else {
+      // Для iOS используем стандартный DatePicker через Alert с текстовым вводом
+      Alert.prompt(
+        'Введите дату и время',
+        'Формат: ДД.ММ.ГГГГ ЧЧ:ММ\nПример: 25.03.2026 14:30',
+        [
+          { text: 'Отмена', style: 'cancel' },
+          {
+            text: 'Установить',
+            onPress: (input) => {
+              if (input) {
+                const parts = input.split(' ');
+                if (parts.length === 2) {
+                  const dateParts = parts[0].split('.');
+                  const timeParts = parts[1].split(':');
+                  if (dateParts.length === 3 && timeParts.length === 2) {
+                    const date = new Date(
+                      parseInt(dateParts[2]),
+                      parseInt(dateParts[1]) - 1,
+                      parseInt(dateParts[0]),
+                      parseInt(timeParts[0]),
+                      parseInt(timeParts[1])
+                    );
+                    if (!isNaN(date.getTime()) && date > new Date()) {
+                      onSetReminder(date.getTime());
+                    } else {
+                      Alert.alert('Ошибка', 'Неверная дата или дата в прошлом');
+                    }
+                  } else {
+                    Alert.alert('Ошибка', 'Неверный формат');
+                  }
+                } else {
+                  Alert.alert('Ошибка', 'Используйте формат: ДД.ММ.ГГГГ ЧЧ:ММ');
+                }
+              }
+            }
+          }
+        ],
+        'plain-text'
+      );
+    }
   };
   
   if (!visible) return null;
