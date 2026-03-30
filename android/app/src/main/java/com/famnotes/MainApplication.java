@@ -10,7 +10,6 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactNativeHost;
 import com.facebook.soloader.SoLoader;
 import java.util.List;
-import com.dieam.reactnativepushnotification.modules.RNPushNotification;
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -57,8 +56,5 @@ public class MainApplication extends Application implements ReactApplication {
       DefaultNewArchitectureEntryPoint.load();
     }
     NotificationHelper.createNotificationChannel(this);
-    
-    // Инициализация RNPushNotification для фоновой работы
-    RNPushNotification.setApplicationContext(this);
   }
 }
