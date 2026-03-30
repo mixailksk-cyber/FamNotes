@@ -37,11 +37,12 @@ export const configureNotifications = async () => {
   PushNotification.configure({
     onNotification: function (notification) {
       console.log('NOTIFICATION:', notification);
+      // Не удаляем уведомление при нажатии
+      // Просто обрабатываем нажатие для открытия приложения
       if (notification.userInteraction) {
         // Пользователь нажал на уведомление
-        if (notification.userInfo && notification.userInfo.noteId) {
-          // TODO: открыть заметку
-        }
+        // Уведомление остается в шторке
+        console.log('User tapped notification, noteId:', notification.userInfo?.noteId);
       }
     },
     onRegister: function (token) {
@@ -85,10 +86,34 @@ export const scheduleReminder = (noteId, title, content, date) => {
   
   console.log('Scheduling reminder for:', notificationDate);
   
+  // Формируем заголовок и текст уведомления
+  let notificationTitle = 'Напоминание';
+  let notificationMessage = '';
+  
+  if (title && title.trim()) {
+    if (content && content.trim()) {
+      // Есть и заголовок, и текст: верхняя строка - заголовок, нижняя - текст
+      notificationTitle = title.trim();
+      notificationMessage = content.trim();
+    } else {
+      // Есть только заголовок: верхняя строка - "Напоминание", нижняя - заголовок
+      notificationTitle = 'Напоминание';
+      notificationMessage = title.trim();
+    }
+  } else if (content && content.trim()) {
+    // Есть только текст: верхняя строка - "Напоминание", нижняя - текст
+    notificationTitle = 'Напоминание';
+    notificationMessage = content.trim();
+  } else {
+    // Нет ни заголовка, ни текста: верхняя строка - "Напоминание", нижняя - стандартный текст
+    notificationTitle = 'Напоминание';
+    notificationMessage = 'У вас есть заметка, требующая внимания';
+  }
+  
   PushNotification.localNotificationSchedule({
     channelId: 'famnotes_channel',
-    title: title || 'Напоминание',
-    message: content || 'У вас есть заметка, требующая внимания',
+    title: notificationTitle,
+    message: notificationMessage,
     date: notificationDate,
     allowWhileIdle: true,
     userInfo: { noteId: noteId },
@@ -100,12 +125,15 @@ export const scheduleReminder = (noteId, title, content, date) => {
     priority: 'high',
     visibility: 'public',
     exact: true,
+    // Уведомление не удаляется при нажатии
+    autoCancel: false,
   });
   
   return true;
 };
 
 export const cancelReminder = (noteId) => {
+  // Отменяем только конкретное напоминание по noteId
   PushNotification.cancelLocalNotifications({ noteId: noteId });
 };
 
