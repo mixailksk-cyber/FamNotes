@@ -319,7 +319,19 @@ const NoteActionDialog = ({
       {/* Модальное окно выбора даты и времени */}
       <Modal visible={showDateTimePicker} transparent animationType="fade" onRequestClose={() => setShowDateTimePicker(false)}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, width: width - 40 }}>
+          <View style={{ 
+            backgroundColor: 'white', 
+            padding: 20, 
+            borderRadius: 8, 
+            width: width - 40,
+            borderWidth: 1,
+            borderColor: '#E0E0E0',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 4,
+            elevation: 5
+          }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, textAlign: 'center', color: brandColor }}>
               Выберите дату и время
             </Text>
@@ -329,7 +341,13 @@ const NoteActionDialog = ({
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <View style={{ flex: 1 }}>
                   <ScrollView 
-                    style={{ height: 120, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8 }}
+                    style={{ 
+                      height: 120, 
+                      borderWidth: 1, 
+                      borderColor: '#E0E0E0', 
+                      borderRadius: 8,
+                      backgroundColor: 'white'
+                    }}
                     showsVerticalScrollIndicator={true}
                   >
                     {getDaysList().map(day => (
@@ -353,9 +371,15 @@ const NoteActionDialog = ({
                   </ScrollView>
                 </View>
                 
-                <View style={{ flex: 2 }}>
+                <View style={{ flex: 1 }}>
                   <ScrollView 
-                    style={{ height: 120, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8 }}
+                    style={{ 
+                      height: 120, 
+                      borderWidth: 1, 
+                      borderColor: '#E0E0E0', 
+                      borderRadius: 8,
+                      backgroundColor: 'white'
+                    }}
                     showsVerticalScrollIndicator={true}
                   >
                     {getMonthsList().map((month, index) => (
@@ -386,7 +410,13 @@ const NoteActionDialog = ({
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <View style={{ flex: 1 }}>
                   <ScrollView 
-                    style={{ height: 120, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8 }}
+                    style={{ 
+                      height: 120, 
+                      borderWidth: 1, 
+                      borderColor: '#E0E0E0', 
+                      borderRadius: 8,
+                      backgroundColor: 'white'
+                    }}
                     showsVerticalScrollIndicator={true}
                   >
                     {getHoursList().map(hour => (
@@ -412,7 +442,13 @@ const NoteActionDialog = ({
                 
                 <View style={{ flex: 1 }}>
                   <ScrollView 
-                    style={{ height: 120, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8 }}
+                    style={{ 
+                      height: 120, 
+                      borderWidth: 1, 
+                      borderColor: '#E0E0E0', 
+                      borderRadius: 8,
+                      backgroundColor: 'white'
+                    }}
                     showsVerticalScrollIndicator={true}
                   >
                     {getMinutesList().map(minute => (
