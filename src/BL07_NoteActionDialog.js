@@ -78,6 +78,8 @@ const NoteActionDialog = ({
     return `${day}.${month} ${hours}:${minutes}`;
   };
   
+  const hasActiveReminder = reminderTime && reminderTime > Date.now();
+  
   // Генерация списка дней (1-31)
   const getDaysList = () => {
     const days = [];
@@ -167,6 +169,12 @@ const NoteActionDialog = ({
     }
   };
   
+  // Отключение напоминания
+  const handleDisableReminder = () => {
+    onSetReminder(null);
+    onClose();
+  };
+  
   const openDateTimePicker = () => {
     setShowDateTimePicker(true);
   };
@@ -216,7 +224,7 @@ const NoteActionDialog = ({
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
-                  onPress={openDateTimePicker} 
+                  onPress={hasActiveReminder ? handleDisableReminder : openDateTimePicker} 
                   style={{ 
                     flex: 1,
                     padding: 12, 
@@ -228,24 +236,25 @@ const NoteActionDialog = ({
                   }}>
                   <Icon name="alarm" size={20} color="white" />
                   <Text style={{ fontSize: 14, color: 'white', marginLeft: 6 }}>
-                    {reminderTime && reminderTime > Date.now() 
-                      ? formatReminderTime(reminderTime)
-                      : "Напомнить"}
+                    {hasActiveReminder ? "Отключить" : "Напомнить"}
                   </Text>
                 </TouchableOpacity>
               </View>
             )}
             
-            {reminderTime && reminderTime > Date.now() && !isInTrash && (
-              <TouchableOpacity 
-                onPress={() => onSetReminder(null)} 
-                style={{ 
-                  padding: 8, 
-                  alignItems: 'center',
-                  marginBottom: 8
-                }}>
-                <Text style={{ fontSize: 12, color: brandColor }}>Отменить напоминание</Text>
-              </TouchableOpacity>
+            {/* Показываем время напоминания если оно активно */}
+            {hasActiveReminder && !isInTrash && (
+              <View style={{ 
+                padding: 8, 
+                alignItems: 'center',
+                marginBottom: 8,
+                backgroundColor: '#F5F5F5',
+                borderRadius: 8
+              }}>
+                <Text style={{ fontSize: 12, color: brandColor }}>
+                  Напоминание установлено на {formatReminderTime(reminderTime)}
+                </Text>
+              </View>
             )}
             
             {/* Перемещение в папки (для всех заметок, включая корзину) */}
