@@ -78,6 +78,7 @@ const NoteActionDialog = ({
     return `${day}.${month} ${hours}:${minutes}`;
   };
   
+  // Проверяем, активно ли напоминание (есть время и оно в будущем)
   const hasActiveReminder = reminderTime && reminderTime > Date.now();
   
   // Генерация списка дней (1-31)
@@ -253,6 +254,9 @@ const NoteActionDialog = ({
               }}>
                 <Text style={{ fontSize: 12, color: brandColor }}>
                   Напоминание установлено на {formatReminderTime(reminderTime)}
+                </Text>
+                <Text style={{ fontSize: 10, color: '#666', marginTop: 4 }}>
+                  Уведомления будут повторяться каждые 10 минут
                 </Text>
               </View>
             )}
