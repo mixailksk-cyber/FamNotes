@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Modal, Animated, Platform, Alert, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Animated, Platform, Alert, ScrollView, Share } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { width, getBrandColor } from './BL02_Constants';
 
@@ -16,7 +16,8 @@ const NoteActionDialog = ({
   settings,
   isInTrash,
   onSetReminder,
-  reminderTime
+  reminderTime,
+  currentNote
 }) => {
   const availableFolders = React.useMemo(() => {
     return folders
@@ -77,6 +78,43 @@ const NoteActionDialog = ({
   };
   
   const hasActiveReminder = reminderTime && reminderTime > Date.now();
+  
+  // Функция для отправки заметки в календарь через системное меню "Поделиться"
+  const shareToCalendar = async () => {
+    if (!currentNote) return;
+    
+    const now = new Date();
+    const defaultDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0); // сегодня 9:00
+    
+    const title = currentNote.title || 'Напоминание';
+    const content = currentNote.content || '';
+    
+    // Формируем текст для календаря в формате iCalendar
+    const startDate = defaultDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const endDate = new Date(defaultDate.getTime() + 60 * 60 * 1000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    
+    const calendarEvent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//FamNotes//RU
+BEGIN:VEVENT
+SUMMARY:${title}
+DESCRIPTION:${content}
+DTSTART:${startDate}
+DTEND:${endDate}
+END:VEVENT
+END:VCALENDAR`;
+    
+    try {
+      await Share.share({
+        title: `📅 ${title}`,
+        message: content || title,
+        // Для Android можно передать как текст
+      });
+      Alert.alert('✅ Отправлено', 'Выберите календарь в меню "Поделиться"');
+    } catch (error) {
+      console.error('Share error:', error);
+    }
+  };
   
   const getDaysList = () => {
     const days = [];
@@ -182,41 +220,61 @@ const NoteActionDialog = ({
             </Text>
             
             {!isInTrash && (
-              <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
-                <TouchableOpacity 
-                  onPress={() => { onTogglePin(); onClose(); }} 
-                  style={{ 
-                    flex: 1,
-                    padding: 12, 
-                    alignItems: 'center', 
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    backgroundColor: brandColor,
-                    borderRadius: 8,
-                  }}>
-                  <Icon name="push-pin" size={20} color="white" />
-                  <Text style={{ fontSize: 14, color: 'white', marginLeft: 6 }}>
-                    {isPinned ? "Открепить" : "Закрепить"}
-                  </Text>
-                </TouchableOpacity>
+              <>
+                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+                  <TouchableOpacity 
+                    onPress={() => { onTogglePin(); onClose(); }} 
+                    style={{ 
+                      flex: 1,
+                      padding: 12, 
+                      alignItems: 'center', 
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                      backgroundColor: brandColor,
+                      borderRadius: 8,
+                    }}>
+                    <Icon name="push-pin" size={20} color="white" />
+                    <Text style={{ fontSize: 14, color: 'white', marginLeft: 6 }}>
+                      {isPinned ? "Открепить" : "Закрепить"}
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    onPress={hasActiveReminder ? handleDisableReminder : openDateTimePicker} 
+                    style={{ 
+                      flex: 1,
+                      padding: 12, 
+                      alignItems: 'center', 
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                      backgroundColor: brandColor,
+                      borderRadius: 8,
+                    }}>
+                    <Icon name="alarm" size={20} color="white" />
+                    <Text style={{ fontSize: 14, color: 'white', marginLeft: 6 }}>
+                      {hasActiveReminder ? "Отключить" : "Напомнить"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
                 
+                {/* Кнопка "Поделиться в календарь" */}
                 <TouchableOpacity 
-                  onPress={hasActiveReminder ? handleDisableReminder : openDateTimePicker} 
+                  onPress={shareToCalendar} 
                   style={{ 
-                    flex: 1,
                     padding: 12, 
                     alignItems: 'center', 
                     flexDirection: 'row',
                     justifyContent: 'center',
-                    backgroundColor: brandColor,
+                    backgroundColor: '#4CAF50',
                     borderRadius: 8,
+                    marginBottom: 16,
                   }}>
-                  <Icon name="alarm" size={20} color="white" />
+                  <Icon name="event" size={20} color="white" />
                   <Text style={{ fontSize: 14, color: 'white', marginLeft: 6 }}>
-                    {hasActiveReminder ? "Отключить" : "Напомнить"}
+                    📅 Поделиться в календарь
                   </Text>
                 </TouchableOpacity>
-              </View>
+              </>
             )}
             
             {hasActiveReminder && !isInTrash && (
@@ -229,9 +287,6 @@ const NoteActionDialog = ({
               }}>
                 <Text style={{ fontSize: 12, color: brandColor }}>
                   Напоминание установлено на {formatReminderTime(reminderTime)}
-                </Text>
-                <Text style={{ fontSize: 10, color: '#666', marginTop: 4 }}>
-                  Уведомления будут повторяться каждые 10 минут
                 </Text>
               </View>
             )}
@@ -301,6 +356,7 @@ const NoteActionDialog = ({
         </Animated.View>
       </Modal>
       
+      {/* Модальное окно выбора даты и времени */}
       <Modal visible={showDateTimePicker} transparent animationType="fade" onRequestClose={() => setShowDateTimePicker(false)}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <View style={{ 
