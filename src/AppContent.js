@@ -325,6 +325,52 @@ const AppContent = () => {
     setCurrentScreen('edit');
   };
   
+  const ActionDialog = () => {
+    if (!selectedNoteForAction) return null;
+    
+    const isInTrashFolder = selectedNoteForAction.folder === 'Корзина' || selectedNoteForAction.deleted === true;
+    
+    return (
+      <NoteActionDialog 
+        visible={showNoteDialog} 
+        onClose={() => { 
+          setShowNoteDialog(false); 
+          setSelectedNoteForAction(null); 
+        }} 
+        folders={folders} 
+        currentFolder={selectedNoteForAction?.folder || currentFolder} 
+        onMove={(targetFolder) => {
+          if (isInTrashFolder) {
+            handleRestoreFromTrash(selectedNoteForAction);
+          } else {
+            handleMoveNote(selectedNoteForAction, targetFolder);
+          }
+          setShowNoteDialog(false);
+          setSelectedNoteForAction(null);
+        }} 
+        onDelete={() => {
+          if (!isInTrashFolder) {
+            handleQuickDelete(selectedNoteForAction);
+          }
+          setShowNoteDialog(false);
+          setSelectedNoteForAction(null);
+        }} 
+        onPermanentDelete={() => {
+          const updatedNotes = notes.filter(n => n.id !== selectedNoteForAction.id);
+          saveNotes(updatedNotes);
+          setShowNoteDialog(false);
+          setSelectedNoteForAction(null);
+        }} 
+        onTogglePin={() => handleTogglePin(selectedNoteForAction.id)}
+        onSetReminder={(time) => handleSetReminder(selectedNoteForAction.id, time)}
+        isPinned={selectedNoteForAction?.pinned || false}
+        isInTrash={isInTrashFolder}
+        reminderTime={selectedNoteForAction?.reminder || null}
+        settings={settings} 
+      />
+    );
+  };
+  
   const NotesListScreen = () => (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
       <StatusBar backgroundColor={brandColor} barStyle="light-content" />
@@ -388,52 +434,6 @@ const AppContent = () => {
       )}
     </View>
   );
-  
-  const ActionDialog = () => {
-    if (!selectedNoteForAction) return null;
-    
-    const isInTrashFolder = selectedNoteForAction.folder === 'Корзина' || selectedNoteForAction.deleted === true;
-    
-    return (
-      <NoteActionDialog 
-        visible={showNoteDialog} 
-        onClose={() => { 
-          setShowNoteDialog(false); 
-          setSelectedNoteForAction(null); 
-        }} 
-        folders={folders} 
-        currentFolder={selectedNoteForAction?.folder || currentFolder} 
-        onMove={(targetFolder) => {
-          if (isInTrashFolder) {
-            handleRestoreFromTrash(selectedNoteForAction);
-          } else {
-            handleMoveNote(selectedNoteForAction, targetFolder);
-          }
-          setShowNoteDialog(false);
-          setSelectedNoteForAction(null);
-        }} 
-        onDelete={() => {
-          if (!isInTrashFolder) {
-            handleQuickDelete(selectedNoteForAction);
-          }
-          setShowNoteDialog(false);
-          setSelectedNoteForAction(null);
-        }} 
-        onPermanentDelete={() => {
-          const updatedNotes = notes.filter(n => n.id !== selectedNoteForAction.id);
-          saveNotes(updatedNotes);
-          setShowNoteDialog(false);
-          setSelectedNoteForAction(null);
-        }} 
-        onTogglePin={() => handleTogglePin(selectedNoteForAction.id)}
-        onSetReminder={(time) => handleSetReminder(selectedNoteForAction.id, time)}
-        isPinned={selectedNoteForAction?.pinned || false}
-        isInTrash={isInTrashFolder}
-        reminderTime={selectedNoteForAction?.reminder || null}
-        settings={settings} 
-      />
-    );
-  };
   
   const isSelectedNoteNew = selectedNote && selectedNote.isNew === true;
   
