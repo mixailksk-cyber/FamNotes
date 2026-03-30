@@ -1,9 +1,12 @@
 import PushNotification from 'react-native-push-notification';
 import { Platform, PermissionsAndroid, Alert } from 'react-native';
+import { addEventToCalendar, removeEventFromCalendar } from './CalendarBridge';
 
-const activeIntervals = {};
+// Хранилище ID событий календаря
+const calendarEventIds = {};
 
 export const configureNotifications = async () => {
+  // Запрос разрешения на уведомления для Android 13+
   if (Platform.OS === 'android') {
     if (Platform.Version >= 33) {
       try {
@@ -18,14 +21,6 @@ export const configureNotifications = async () => {
           }
         );
         console.log('Notification permission:', granted);
-        
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          Alert.alert(
-            'Уведомления отключены',
-            'Для получения напоминаний включите уведомления в настройках приложения',
-            [{ text: 'OK' }]
-          );
-        }
       } catch (err) {
         console.warn('Permission request error:', err);
       }
@@ -35,6 +30,8 @@ export const configureNotifications = async () => {
   PushNotification.configure({
     onNotification: function (notification) {
       console.log('NOTIFICATION:', notification);
+      // При нажатии на уведомление открываем приложение
+      // Уведомление остается в шторке (autoCancel: false)
     },
     onRegister: function (token) {
       console.log('TOKEN:', token);
@@ -48,6 +45,7 @@ export const configureNotifications = async () => {
     requestPermissions: Platform.OS === 'ios',
   });
   
+  // Создаем канал уведомлений
   if (Platform.OS === 'android') {
     PushNotification.createChannel(
       {
@@ -87,6 +85,7 @@ const getNotificationTexts = (title, content) => {
   return { notificationTitle, notificationMessage };
 };
 
+// Отправка одного уведомления
 const sendNotification = (noteId, title, content) => {
   const { notificationTitle, notificationMessage } = getNotificationTexts(title, content);
   
@@ -103,11 +102,12 @@ const sendNotification = (noteId, title, content) => {
     importance: 'high',
     priority: 'high',
     visibility: 'public',
-    autoCancel: false,
+    autoCancel: false, // Уведомление не пропадает при нажатии
   });
 };
 
-export const scheduleReminder = (noteId, title, content, date) => {
+// Планирование повторяющихся уведомлений через нативный будильник
+export const scheduleReminder = async (noteId, title, content, date, useCalendar = false, onCalendarEventSaved = null) => {
   const notificationDate = new Date(date);
   const now = new Date();
   
@@ -118,45 +118,66 @@ export const scheduleReminder = (noteId, title, content, date) => {
   
   console.log('Scheduling reminder for:', notificationDate);
   
+  // Отменяем существующие напоминания
   cancelReminder(noteId);
   
-  const delay = notificationDate.getTime() - now.getTime();
+  // Добавляем в календарь если включено
+  if (useCalendar && Platform.OS === 'android') {
+    const eventId = await addEventToCalendar(title, content, date);
+    if (eventId) {
+      calendarEventIds[noteId] = eventId;
+      if (onCalendarEventSaved) {
+        onCalendarEventSaved(noteId, eventId);
+      }
+      console.log('✅ Added to calendar, eventId:', eventId);
+    }
+  }
   
-  activeIntervals[noteId] = setTimeout(() => {
-    sendNotification(noteId, title, content);
-    
-    activeIntervals[noteId] = setInterval(() => {
-      sendNotification(noteId, title, content);
-    }, 10 * 60 * 1000);
-  }, delay);
+  // Планируем первое уведомление через нативный будильник
+  PushNotification.localNotificationSchedule({
+    channelId: 'famnotes_channel',
+    title: getNotificationTexts(title, content).notificationTitle,
+    message: getNotificationTexts(title, content).notificationMessage,
+    date: notificationDate,
+    allowWhileIdle: true,
+    userInfo: { noteId: noteId, isRepeating: true },
+    vibrate: true,
+    vibration: 300,
+    playSound: true,
+    soundName: 'default',
+    importance: 'high',
+    priority: 'high',
+    visibility: 'public',
+    autoCancel: false,
+    // Повторять каждые 10 минут после первого
+    repeatType: 'minute',
+    repeatTime: 10,
+  });
   
+  console.log('✅ Scheduled notification for:', notificationDate);
   return true;
 };
 
+// Отмена напоминания
 export const cancelReminder = (noteId) => {
-  if (activeIntervals[noteId]) {
-    if (typeof activeIntervals[noteId] === 'number') {
-      clearTimeout(activeIntervals[noteId]);
-    } else {
-      clearInterval(activeIntervals[noteId]);
-    }
-    delete activeIntervals[noteId];
+  // Отменяем все запланированные уведомления для этой заметки
+  PushNotification.cancelLocalNotifications({ noteId: noteId });
+  
+  // Удаляем из календаря
+  if (calendarEventIds[noteId]) {
+    removeEventFromCalendar(calendarEventIds[noteId]);
+    delete calendarEventIds[noteId];
   }
   
-  PushNotification.cancelLocalNotifications({ noteId: noteId });
+  console.log('❌ Cancelled reminders for note:', noteId);
 };
 
+// Отмена всех напоминаний
 export const cancelAllReminders = () => {
-  Object.keys(activeIntervals).forEach(noteId => {
-    if (activeIntervals[noteId]) {
-      if (typeof activeIntervals[noteId] === 'number') {
-        clearTimeout(activeIntervals[noteId]);
-      } else {
-        clearInterval(activeIntervals[noteId]);
-      }
-    }
-  });
-  Object.keys(activeIntervals).forEach(key => delete activeIntervals[key]);
-  
   PushNotification.cancelAllLocalNotifications();
+  Object.keys(calendarEventIds).forEach(noteId => {
+    removeEventFromCalendar(calendarEventIds[noteId]);
+    delete calendarEventIds[noteId];
+  });
+  console.log('❌ Cancelled all reminders');
 };
