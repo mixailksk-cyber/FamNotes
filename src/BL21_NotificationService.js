@@ -7,7 +7,7 @@ const activeIntervals = {};
 export const configureNotifications = async () => {
   // Запрос разрешения на Android 13+
   if (Platform.OS === 'android') {
-    if (Platform.Version >= 33) { // Android 13 (API 33) и выше
+    if (Platform.Version >= 33) {
       try {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
@@ -40,7 +40,6 @@ export const configureNotifications = async () => {
   PushNotification.configure({
     onNotification: function (notification) {
       console.log('NOTIFICATION:', notification);
-      // Не удаляем уведомление при нажатии
       if (notification.userInteraction) {
         console.log('User tapped notification, noteId:', notification.userInfo?.noteId);
         // Уведомление остается в шторке, ничего не делаем
@@ -58,14 +57,13 @@ export const configureNotifications = async () => {
     requestPermissions: Platform.OS === 'ios',
   });
   
-  // Создаем канал уведомлений (для Android 8+)
   if (Platform.OS === 'android') {
     PushNotification.createChannel(
       {
         channelId: 'famnotes_channel',
         channelName: 'FamNotes Reminders',
         channelDescription: 'Notifications for note reminders',
-        importance: 5, // HIGH
+        importance: 5,
         vibrate: true,
         playSound: true,
         soundName: 'default',
@@ -75,27 +73,22 @@ export const configureNotifications = async () => {
   }
 };
 
-// Формирование текста уведомления
 const getNotificationTexts = (title, content) => {
   let notificationTitle = 'Напоминание';
   let notificationMessage = '';
   
   if (title && title.trim()) {
     if (content && content.trim()) {
-      // Есть и заголовок, и текст: верхняя строка - заголовок, нижняя - текст
       notificationTitle = title.trim();
       notificationMessage = content.trim();
     } else {
-      // Есть только заголовок: верхняя строка - "Напоминание", нижняя - заголовок
       notificationTitle = 'Напоминание';
       notificationMessage = title.trim();
     }
   } else if (content && content.trim()) {
-    // Есть только текст: верхняя строка - "Напоминание", нижняя - текст
     notificationTitle = 'Напоминание';
     notificationMessage = content.trim();
   } else {
-    // Нет ни заголовка, ни текста: верхняя строка - "Напоминание", нижняя - стандартный текст
     notificationTitle = 'Напоминание';
     notificationMessage = 'У вас есть заметка, требующая внимания';
   }
@@ -103,7 +96,6 @@ const getNotificationTexts = (title, content) => {
   return { notificationTitle, notificationMessage };
 };
 
-// Отправка уведомления
 const sendNotification = (noteId, title, content) => {
   const { notificationTitle, notificationMessage } = getNotificationTexts(title, content);
   
@@ -120,7 +112,6 @@ const sendNotification = (noteId, title, content) => {
     importance: 'high',
     priority: 'high',
     visibility: 'public',
-    // Уведомление не удаляется при нажатии
     autoCancel: false,
   });
 };
@@ -129,7 +120,6 @@ export const scheduleReminder = (noteId, title, content, date) => {
   const notificationDate = new Date(date);
   const now = new Date();
   
-  // Проверяем, что дата в будущем
   if (notificationDate <= now) {
     console.log('Cannot schedule reminder in the past');
     return false;
@@ -137,10 +127,8 @@ export const scheduleReminder = (noteId, title, content, date) => {
   
   console.log('Scheduling reminder for:', notificationDate);
   
-  // Сначала отменяем существующее напоминание для этой заметки
   cancelReminder(noteId);
   
-  // Вычисляем задержку до первого уведомления
   const delay = notificationDate.getTime() - now.getTime();
   
   // Запускаем интервал для повторяющихся уведомлений
@@ -151,14 +139,13 @@ export const scheduleReminder = (noteId, title, content, date) => {
     // Запускаем интервал для повторения каждые 10 минут
     activeIntervals[noteId] = setInterval(() => {
       sendNotification(noteId, title, content);
-    }, 10 * 60 * 1000); // 10 минут
+    }, 10 * 60 * 1000);
   }, delay);
   
   return true;
 };
 
 export const cancelReminder = (noteId) => {
-  // Останавливаем интервал для этой заметки
   if (activeIntervals[noteId]) {
     if (typeof activeIntervals[noteId] === 'number') {
       clearTimeout(activeIntervals[noteId]);
@@ -168,12 +155,10 @@ export const cancelReminder = (noteId) => {
     delete activeIntervals[noteId];
   }
   
-  // Отменяем все запланированные уведомления для этой заметки
   PushNotification.cancelLocalNotifications({ noteId: noteId });
 };
 
 export const cancelAllReminders = () => {
-  // Останавливаем все интервалы
   Object.keys(activeIntervals).forEach(noteId => {
     if (activeIntervals[noteId]) {
       if (typeof activeIntervals[noteId] === 'number') {
@@ -185,6 +170,5 @@ export const cancelAllReminders = () => {
   });
   Object.keys(activeIntervals).forEach(key => delete activeIntervals[key]);
   
-  // Отменяем все уведомления
   PushNotification.cancelAllLocalNotifications();
 };
