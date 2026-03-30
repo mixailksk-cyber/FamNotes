@@ -1,7 +1,6 @@
 package com.famnotes;
 
 import android.app.Application;
-import android.content.Context;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
 import com.facebook.react.ReactNativeHost;
@@ -10,7 +9,6 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactNativeHost;
 import com.facebook.soloader.SoLoader;
 import java.util.List;
-import com.dieam.reactnativepushnotification.modules.RNPushNotification;
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -57,16 +55,5 @@ public class MainApplication extends Application implements ReactApplication {
       DefaultNewArchitectureEntryPoint.load();
     }
     NotificationHelper.createNotificationChannel(this);
-    
-    // Инициализация push уведомлений для фоновой работы
-    RNPushNotification.createChannel(
-        this,
-        "famnotes_channel",
-        "FamNotes Reminders",
-        "Notifications for note reminders",
-        5, // Importance: 5 = HIGH
-        true, // Vibrate
-        true  // PlaySound
-    );
   }
 }
