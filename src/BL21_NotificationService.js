@@ -30,8 +30,6 @@ export const configureNotifications = async () => {
   PushNotification.configure({
     onNotification: function (notification) {
       console.log('NOTIFICATION:', notification);
-      // При нажатии на уведомление открываем приложение
-      // Уведомление остается в шторке (autoCancel: false)
     },
     onRegister: function (token) {
       console.log('TOKEN:', token);
@@ -102,11 +100,11 @@ const sendNotification = (noteId, title, content) => {
     importance: 'high',
     priority: 'high',
     visibility: 'public',
-    autoCancel: false, // Уведомление не пропадает при нажатии
+    autoCancel: false,
   });
 };
 
-// Планирование повторяющихся уведомлений через нативный будильник
+// Планирование уведомления
 export const scheduleReminder = async (noteId, title, content, date, useCalendar = false, onCalendarEventSaved = null) => {
   const notificationDate = new Date(date);
   const now = new Date();
@@ -123,24 +121,30 @@ export const scheduleReminder = async (noteId, title, content, date, useCalendar
   
   // Добавляем в календарь если включено
   if (useCalendar && Platform.OS === 'android') {
-    const eventId = await addEventToCalendar(title, content, date);
-    if (eventId) {
-      calendarEventIds[noteId] = eventId;
-      if (onCalendarEventSaved) {
-        onCalendarEventSaved(noteId, eventId);
+    try {
+      const eventId = await addEventToCalendar(title, content, date);
+      if (eventId) {
+        calendarEventIds[noteId] = eventId;
+        if (onCalendarEventSaved) {
+          onCalendarEventSaved(noteId, eventId);
+        }
+        console.log('✅ Added to calendar, eventId:', eventId);
+      } else {
+        console.log('❌ Failed to add to calendar');
       }
-      console.log('✅ Added to calendar, eventId:', eventId);
+    } catch (error) {
+      console.error('Calendar error:', error);
     }
   }
   
-  // Планируем первое уведомление через нативный будильник
+  // Планируем уведомление (один раз)
   PushNotification.localNotificationSchedule({
     channelId: 'famnotes_channel',
     title: getNotificationTexts(title, content).notificationTitle,
     message: getNotificationTexts(title, content).notificationMessage,
     date: notificationDate,
     allowWhileIdle: true,
-    userInfo: { noteId: noteId, isRepeating: true },
+    userInfo: { noteId: noteId },
     vibrate: true,
     vibration: 300,
     playSound: true,
@@ -149,9 +153,6 @@ export const scheduleReminder = async (noteId, title, content, date, useCalendar
     priority: 'high',
     visibility: 'public',
     autoCancel: false,
-    // Повторять каждые 10 минут после первого
-    repeatType: 'minute',
-    repeatTime: 10,
   });
   
   console.log('✅ Scheduled notification for:', notificationDate);
