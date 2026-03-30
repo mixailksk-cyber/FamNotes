@@ -30,14 +30,13 @@ const NoteActionDialog = ({
   const [fadeAnim] = React.useState(new Animated.Value(0));
   const [scaleAnim] = React.useState(new Animated.Value(0.9));
   
-  // Состояния для выбора даты и времени
   const [showDateTimePicker, setShowDateTimePicker] = useState(false);
   const [selectedDay, setSelectedDay] = useState(new Date().getDate());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedHour, setSelectedHour] = useState(0);
   const [selectedMinute, setSelectedMinute] = useState(0);
   
-  React.useEffect(() => {
+  useEffect(() => {
     if (visible) {
       Animated.parallel([
         Animated.timing(fadeAnim, {
@@ -53,7 +52,6 @@ const NoteActionDialog = ({
         }),
       ]).start();
       
-      // Сбрасываем значения при открытии
       const now = new Date();
       setSelectedDay(now.getDate());
       setSelectedMonth(now.getMonth());
@@ -78,10 +76,8 @@ const NoteActionDialog = ({
     return `${day}.${month} ${hours}:${minutes}`;
   };
   
-  // Проверяем, активно ли напоминание (есть время и оно в будущем)
   const hasActiveReminder = reminderTime && reminderTime > Date.now();
   
-  // Генерация списка дней (1-31)
   const getDaysList = () => {
     const days = [];
     for (let i = 1; i <= 31; i++) {
@@ -90,16 +86,10 @@ const NoteActionDialog = ({
     return days;
   };
   
-  // Генерация списка месяцев
   const getMonthsList = () => {
-    const months = [
-      'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
-    ];
-    return months;
+    return ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
   };
   
-  // Генерация списка часов (0-23)
   const getHoursList = () => {
     const hours = [];
     for (let i = 0; i <= 23; i++) {
@@ -108,7 +98,6 @@ const NoteActionDialog = ({
     return hours;
   };
   
-  // Генерация списка минут (0-59)
   const getMinutesList = () => {
     const minutes = [];
     for (let i = 0; i <= 59; i++) {
@@ -117,32 +106,24 @@ const NoteActionDialog = ({
     return minutes;
   };
   
-  // Проверка валидности даты (учитываем количество дней в месяце)
   const isValidDate = (day, month, year) => {
     const date = new Date(year, month, day);
     return date.getMonth() === month && date.getDate() === day;
   };
   
-  // Установка напоминания
   const handleSetReminder = () => {
     const now = new Date();
     let year = now.getFullYear();
     let month = selectedMonth;
     let day = selectedDay;
     
-    // Если выбранный месяц меньше текущего, используем следующий год
     if (month < now.getMonth()) {
       year = now.getFullYear() + 1;
-    } 
-    // Если месяц тот же, но день меньше, используем следующий год
-    else if (month === now.getMonth() && day < now.getDate()) {
+    } else if (month === now.getMonth() && day < now.getDate()) {
       year = now.getFullYear() + 1;
-    }
-    // Если день сегодня, но время уже прошло, добавляем день
-    else if (month === now.getMonth() && day === now.getDate()) {
+    } else if (month === now.getMonth() && day === now.getDate()) {
       const selectedTime = new Date(year, month, day, selectedHour, selectedMinute);
       if (selectedTime <= now) {
-        // Если время уже прошло сегодня, устанавливаем на завтра
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
         year = tomorrow.getFullYear();
@@ -151,9 +132,7 @@ const NoteActionDialog = ({
       }
     }
     
-    // Проверяем валидность даты (например, 31 апреля не существует)
     if (!isValidDate(day, month, year)) {
-      // Корректируем день до последнего дня месяца
       const lastDay = new Date(year, month + 1, 0).getDate();
       day = Math.min(day, lastDay);
     }
@@ -163,14 +142,12 @@ const NoteActionDialog = ({
     if (reminderDate > now) {
       onSetReminder(reminderDate.getTime());
       setShowDateTimePicker(false);
-      // Закрываем основной диалог после установки напоминания
       onClose();
     } else {
       Alert.alert('Ошибка', 'Выбранная дата и время уже прошли');
     }
   };
   
-  // Отключение напоминания
   const handleDisableReminder = () => {
     onSetReminder(null);
     onClose();
@@ -204,7 +181,6 @@ const NoteActionDialog = ({
               Действия с заметкой
             </Text>
             
-            {/* Кнопки закрепления и напоминания (только не в корзине) */}
             {!isInTrash && (
               <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
                 <TouchableOpacity 
@@ -243,7 +219,6 @@ const NoteActionDialog = ({
               </View>
             )}
             
-            {/* Показываем время напоминания если оно активно */}
             {hasActiveReminder && !isInTrash && (
               <View style={{ 
                 padding: 8, 
@@ -261,7 +236,6 @@ const NoteActionDialog = ({
               </View>
             )}
             
-            {/* Перемещение в папки (для всех заметок, включая корзину) */}
             {availableFolders.length > 0 && (
               <>
                 <Text style={{ marginBottom: 8, color: '#666', marginTop: 8 }}>Переместить в папку:</Text>
@@ -279,7 +253,6 @@ const NoteActionDialog = ({
               </>
             )}
             
-            {/* Кнопки для обычных заметок (не в корзине) */}
             {!isInTrash && (
               <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
                 <TouchableOpacity 
@@ -312,7 +285,6 @@ const NoteActionDialog = ({
               </View>
             )}
             
-            {/* Кнопка "Удалить безвозвратно" для корзины */}
             {isInTrash && (
               <TouchableOpacity 
                 onPress={() => { onPermanentDelete(); onClose(); }} 
@@ -329,7 +301,6 @@ const NoteActionDialog = ({
         </Animated.View>
       </Modal>
       
-      {/* Модальное окно выбора даты и времени */}
       <Modal visible={showDateTimePicker} transparent animationType="fade" onRequestClose={() => setShowDateTimePicker(false)}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <View style={{ 
@@ -353,64 +324,25 @@ const NoteActionDialog = ({
               <Text style={{ marginBottom: 8, color: '#666' }}>День и месяц:</Text>
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <View style={{ flex: 1 }}>
-                  <ScrollView 
-                    style={{ 
-                      height: 120, 
-                      borderWidth: 1, 
-                      borderColor: '#E0E0E0', 
-                      borderRadius: 8,
-                      backgroundColor: 'white'
-                    }}
-                    showsVerticalScrollIndicator={true}
-                  >
+                  <ScrollView style={{ height: 120, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, backgroundColor: 'white' }}>
                     {getDaysList().map(day => (
                       <TouchableOpacity 
                         key={day}
                         onPress={() => setSelectedDay(day)}
-                        style={{ 
-                          padding: 8, 
-                          alignItems: 'center',
-                          backgroundColor: selectedDay === day ? brandColor : 'white'
-                        }}
-                      >
-                        <Text style={{ 
-                          color: selectedDay === day ? 'white' : '#333',
-                          fontWeight: selectedDay === day ? 'bold' : 'normal'
-                        }}>
-                          {day}
-                        </Text>
+                        style={{ padding: 8, alignItems: 'center', backgroundColor: selectedDay === day ? brandColor : 'white' }}>
+                        <Text style={{ color: selectedDay === day ? 'white' : '#333', fontWeight: selectedDay === day ? 'bold' : 'normal' }}>{day}</Text>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
                 </View>
-                
                 <View style={{ flex: 1 }}>
-                  <ScrollView 
-                    style={{ 
-                      height: 120, 
-                      borderWidth: 1, 
-                      borderColor: '#E0E0E0', 
-                      borderRadius: 8,
-                      backgroundColor: 'white'
-                    }}
-                    showsVerticalScrollIndicator={true}
-                  >
+                  <ScrollView style={{ height: 120, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, backgroundColor: 'white' }}>
                     {getMonthsList().map((month, index) => (
                       <TouchableOpacity 
                         key={index}
                         onPress={() => setSelectedMonth(index)}
-                        style={{ 
-                          padding: 8, 
-                          alignItems: 'center',
-                          backgroundColor: selectedMonth === index ? brandColor : 'white'
-                        }}
-                      >
-                        <Text style={{ 
-                          color: selectedMonth === index ? 'white' : '#333',
-                          fontWeight: selectedMonth === index ? 'bold' : 'normal'
-                        }}>
-                          {month}
-                        </Text>
+                        style={{ padding: 8, alignItems: 'center', backgroundColor: selectedMonth === index ? brandColor : 'white' }}>
+                        <Text style={{ color: selectedMonth === index ? 'white' : '#333', fontWeight: selectedMonth === index ? 'bold' : 'normal' }}>{month}</Text>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -422,64 +354,25 @@ const NoteActionDialog = ({
               <Text style={{ marginBottom: 8, color: '#666' }}>Время:</Text>
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <View style={{ flex: 1 }}>
-                  <ScrollView 
-                    style={{ 
-                      height: 120, 
-                      borderWidth: 1, 
-                      borderColor: '#E0E0E0', 
-                      borderRadius: 8,
-                      backgroundColor: 'white'
-                    }}
-                    showsVerticalScrollIndicator={true}
-                  >
+                  <ScrollView style={{ height: 120, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, backgroundColor: 'white' }}>
                     {getHoursList().map(hour => (
                       <TouchableOpacity 
                         key={hour}
                         onPress={() => setSelectedHour(parseInt(hour))}
-                        style={{ 
-                          padding: 8, 
-                          alignItems: 'center',
-                          backgroundColor: selectedHour === parseInt(hour) ? brandColor : 'white'
-                        }}
-                      >
-                        <Text style={{ 
-                          color: selectedHour === parseInt(hour) ? 'white' : '#333',
-                          fontWeight: selectedHour === parseInt(hour) ? 'bold' : 'normal'
-                        }}>
-                          {hour}
-                        </Text>
+                        style={{ padding: 8, alignItems: 'center', backgroundColor: selectedHour === parseInt(hour) ? brandColor : 'white' }}>
+                        <Text style={{ color: selectedHour === parseInt(hour) ? 'white' : '#333', fontWeight: selectedHour === parseInt(hour) ? 'bold' : 'normal' }}>{hour}</Text>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
                 </View>
-                
                 <View style={{ flex: 1 }}>
-                  <ScrollView 
-                    style={{ 
-                      height: 120, 
-                      borderWidth: 1, 
-                      borderColor: '#E0E0E0', 
-                      borderRadius: 8,
-                      backgroundColor: 'white'
-                    }}
-                    showsVerticalScrollIndicator={true}
-                  >
+                  <ScrollView style={{ height: 120, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, backgroundColor: 'white' }}>
                     {getMinutesList().map(minute => (
                       <TouchableOpacity 
                         key={minute}
                         onPress={() => setSelectedMinute(parseInt(minute))}
-                        style={{ 
-                          padding: 8, 
-                          alignItems: 'center',
-                          backgroundColor: selectedMinute === parseInt(minute) ? brandColor : 'white'
-                        }}
-                      >
-                        <Text style={{ 
-                          color: selectedMinute === parseInt(minute) ? 'white' : '#333',
-                          fontWeight: selectedMinute === parseInt(minute) ? 'bold' : 'normal'
-                        }}>
-                          {minute}
-                        </Text>
+                        style={{ padding: 8, alignItems: 'center', backgroundColor: selectedMinute === parseInt(minute) ? brandColor : 'white' }}>
+                        <Text style={{ color: selectedMinute === parseInt(minute) ? 'white' : '#333', fontWeight: selectedMinute === parseInt(minute) ? 'bold' : 'normal' }}>{minute}</Text>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -488,17 +381,10 @@ const NoteActionDialog = ({
             </View>
             
             <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 16 }}>
-              <TouchableOpacity 
-                onPress={() => setShowDateTimePicker(false)} 
-                style={{ padding: 12 }}
-              >
+              <TouchableOpacity onPress={() => setShowDateTimePicker(false)} style={{ padding: 12 }}>
                 <Text style={{ color: '#999', fontSize: 16 }}>Отмена</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                onPress={handleSetReminder} 
-                style={{ padding: 12 }}
-              >
+              <TouchableOpacity onPress={handleSetReminder} style={{ padding: 12 }}>
                 <Text style={{ color: brandColor, fontWeight: 'bold', fontSize: 16 }}>Установить</Text>
               </TouchableOpacity>
             </View>
