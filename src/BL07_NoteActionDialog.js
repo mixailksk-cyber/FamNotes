@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Modal, Animated, Alert, ScrollView, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Animated, Alert, ScrollView } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { width, getBrandColor } from './BL02_Constants';
 
@@ -29,8 +30,14 @@ const NoteActionDialog = ({
   
   const [fadeAnim] = React.useState(new Animated.Value(0));
   const [scaleAnim] = React.useState(new Animated.Value(0.9));
-  const [showDateInput, setShowDateInput] = React.useState(false);
-  const [dateInputValue, setDateInputValue] = React.useState('');
+  const [showDatePicker, setShowDatePicker] = React.useState(false);
+  
+  // Состояния для выбора даты и времени
+  const now = new Date();
+  const [selectedDay, setSelectedDay] = React.useState(now.getDate());
+  const [selectedMonth, setSelectedMonth] = React.useState(now.getMonth());
+  const [selectedHour, setSelectedHour] = React.useState(0);
+  const [selectedMinute, setSelectedMinute] = React.useState(0);
   
   React.useEffect(() => {
     if (visible) {
@@ -50,8 +57,13 @@ const NoteActionDialog = ({
     } else {
       fadeAnim.setValue(0);
       scaleAnim.setValue(0.9);
-      setShowDateInput(false);
-      setDateInputValue('');
+      setShowDatePicker(false);
+      // Сброс на текущую дату при закрытии
+      const today = new Date();
+      setSelectedDay(today.getDate());
+      setSelectedMonth(today.getMonth());
+      setSelectedHour(0);
+      setSelectedMinute(0);
     }
   }, [visible]);
   
@@ -67,56 +79,64 @@ const NoteActionDialog = ({
     return `${day}.${month} ${hours}:${minutes}`;
   };
   
+  // Получить количество дней в месяце
+  const getDaysInMonth = (month, year) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+  
+  // Генерация списка дней
+  const getDaysList = () => {
+    const currentYear = new Date().getFullYear();
+    const daysInMonth = getDaysInMonth(selectedMonth, currentYear);
+    const days = [];
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
+    }
+    return days;
+  };
+  
+  // Генерация списка месяцев
+  const monthsList = [
+    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+  ];
+  
+  // Генерация списка часов (0-23)
+  const hoursList = [];
+  for (let i = 0; i < 24; i++) {
+    hoursList.push(i.toString().padStart(2, '0'));
+  }
+  
+  // Генерация списка минут (0-59)
+  const minutesList = [];
+  for (let i = 0; i < 60; i++) {
+    minutesList.push(i.toString().padStart(2, '0'));
+  }
+  
   const handleSetReminder = () => {
-    if (!dateInputValue || !dateInputValue.trim()) {
-      Alert.alert('Ошибка', 'Введите дату и время');
-      return;
-    }
+    const currentYear = new Date().getFullYear();
+    const selectedDate = new Date(currentYear, selectedMonth, selectedDay, selectedHour, selectedMinute);
+    const now = new Date();
     
-    const input = dateInputValue.trim();
-    const parts = input.split(' ');
-    
-    if (parts.length !== 2) {
-      Alert.alert('Ошибка', 'Используйте формат: ДД.ММ.ГГГГ ЧЧ:ММ');
-      return;
-    }
-    
-    const dateParts = parts[0].split('.');
-    const timeParts = parts[1].split(':');
-    
-    if (dateParts.length !== 3 || timeParts.length !== 2) {
-      Alert.alert('Ошибка', 'Используйте формат: ДД.ММ.ГГГГ ЧЧ:ММ');
-      return;
-    }
-    
-    const year = parseInt(dateParts[2]);
-    const month = parseInt(dateParts[1]) - 1;
-    const day = parseInt(dateParts[0]);
-    const hour = parseInt(timeParts[0]);
-    const minute = parseInt(timeParts[1]);
-    
-    if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) {
-      Alert.alert('Ошибка', 'Введите корректные числа');
-      return;
-    }
-    
-    const date = new Date(year, month, day, hour, minute);
-    
-    if (isNaN(date.getTime())) {
-      Alert.alert('Ошибка', 'Неверный формат даты');
-    } else if (date <= new Date()) {
+    // Проверяем, что выбранная дата не в прошлом
+    if (selectedDate <= now) {
       Alert.alert('Ошибка', 'Дата и время должны быть в будущем');
-    } else {
-      onSetReminder(date.getTime());
-      setShowDateInput(false);
-      setDateInputValue('');
-      onClose();
+      return;
     }
+    
+    onSetReminder(selectedDate.getTime());
+    setShowDatePicker(false);
+    onClose();
   };
   
   const showDateTimePicker = () => {
-    setShowDateInput(true);
-    setDateInputValue('');
+    // Устанавливаем текущую дату и время 00:00
+    const today = new Date();
+    setSelectedDay(today.getDate());
+    setSelectedMonth(today.getMonth());
+    setSelectedHour(0);
+    setSelectedMinute(0);
+    setShowDatePicker(true);
   };
   
   if (!visible) return null;
@@ -262,46 +282,82 @@ const NoteActionDialog = ({
         </Animated.View>
       </Animated.View>
       
-      {/* Модальное окно для ввода даты и времени */}
-      <Modal visible={showDateInput} transparent animationType="fade" onRequestClose={() => setShowDateInput(false)}>
+      {/* Модальное окно для выбора даты и времени */}
+      <Modal visible={showDatePicker} transparent animationType="fade" onRequestClose={() => setShowDatePicker(false)}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, width: width - 40 }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, textAlign: 'center', color: brandColor }}>
               Установить напоминание
             </Text>
             
-            <Text style={{ marginBottom: 8, color: '#666' }}>
-              Введите дату и время в формате:
-            </Text>
-            <Text style={{ marginBottom: 16, color: brandColor, fontWeight: 'bold' }}>
-              ДД.ММ.ГГГГ ЧЧ:ММ
-            </Text>
-            <Text style={{ marginBottom: 8, color: '#999', fontSize: 12 }}>
-              Пример: 25.03.2026 14:30
-            </Text>
+            {/* Выбор дня и месяца */}
+            <Text style={{ marginBottom: 8, color: '#666' }}>Дата:</Text>
+            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+              <View style={{ flex: 1, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, overflow: 'hidden' }}>
+                <Picker
+                  selectedValue={selectedDay}
+                  onValueChange={(itemValue) => setSelectedDay(itemValue)}
+                  style={{ height: 150 }}
+                >
+                  {getDaysList().map(day => (
+                    <Picker.Item key={day} label={day.toString()} value={day} />
+                  ))}
+                </Picker>
+              </View>
+              
+              <View style={{ flex: 2, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, overflow: 'hidden' }}>
+                <Picker
+                  selectedValue={selectedMonth}
+                  onValueChange={(itemValue) => {
+                    setSelectedMonth(itemValue);
+                    // Корректируем день, если выбранный день больше количества дней в новом месяце
+                    const currentYear = new Date().getFullYear();
+                    const daysInNewMonth = getDaysInMonth(itemValue, currentYear);
+                    if (selectedDay > daysInNewMonth) {
+                      setSelectedDay(daysInNewMonth);
+                    }
+                  }}
+                  style={{ height: 150 }}
+                >
+                  {monthsList.map((month, index) => (
+                    <Picker.Item key={index} label={month} value={index} />
+                  ))}
+                </Picker>
+              </View>
+            </View>
             
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: '#E0E0E0',
-                borderRadius: 8,
-                padding: 12,
-                fontSize: 16,
-                marginBottom: 20,
-                backgroundColor: '#F5F5F5'
-              }}
-              placeholder="25.03.2026 14:30"
-              value={dateInputValue}
-              onChangeText={setDateInputValue}
-              autoFocus
-              keyboardType="default"
-            />
+            {/* Выбор часа и минуты */}
+            <Text style={{ marginBottom: 8, color: '#666' }}>Время:</Text>
+            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+              <View style={{ flex: 1, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, overflow: 'hidden' }}>
+                <Picker
+                  selectedValue={selectedHour}
+                  onValueChange={(itemValue) => setSelectedHour(itemValue)}
+                  style={{ height: 150 }}
+                >
+                  {hoursList.map(hour => (
+                    <Picker.Item key={hour} label={hour} value={parseInt(hour)} />
+                  ))}
+                </Picker>
+              </View>
+              
+              <View style={{ flex: 1, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, overflow: 'hidden' }}>
+                <Picker
+                  selectedValue={selectedMinute}
+                  onValueChange={(itemValue) => setSelectedMinute(itemValue)}
+                  style={{ height: 150 }}
+                >
+                  {minutesList.map(minute => (
+                    <Picker.Item key={minute} label={minute} value={parseInt(minute)} />
+                  ))}
+                </Picker>
+              </View>
+            </View>
             
-            <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 8 }}>
               <TouchableOpacity 
                 onPress={() => {
-                  setShowDateInput(false);
-                  setDateInputValue('');
+                  setShowDatePicker(false);
                 }} 
                 style={{ padding: 12 }}>
                 <Text style={{ color: '#999', fontSize: 16 }}>Отмена</Text>
