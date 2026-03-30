@@ -20,8 +20,8 @@ const SettingsScreen = ({
 }) => {
   const fontSizeOptions = [14, 16, 18, 20, 22, 24];
   const brandColor = getBrandColor(settings);
-  const [isRestoring, setIsRestoring] = React.useState(false);
-  const [isBackingUp, setIsBackingUp] = React.useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState(false);
   const [useCalendar, setUseCalendar] = useState(settings.useCalendar || false);
   const [calendarEnabled, setCalendarEnabled] = useState(false);
 
@@ -183,7 +183,7 @@ const SettingsScreen = ({
               text: 'Восстановить', 
               onPress: async () => {
                 try {
-                  const normalizedNotes = backup.notes.map(note => ({
+                  const restoredNotes = backup.notes.map(note => ({
                     id: note.id || Date.now().toString() + Math.random(),
                     title: note.title || '',
                     content: note.content || '',
@@ -196,19 +196,19 @@ const SettingsScreen = ({
                     locked: note.locked || false
                   }));
                   
-                  let normalizedFolders = [...backup.folders];
+                  let restoredFolders = [...backup.folders];
                   
-                  const hasMain = normalizedFolders.some(f => {
+                  const hasMain = restoredFolders.some(f => {
                     const name = typeof f === 'object' ? f.name : f;
                     return name === 'Главная';
                   });
-                  const hasTrash = normalizedFolders.some(f => {
+                  const hasTrash = restoredFolders.some(f => {
                     const name = typeof f === 'object' ? f.name : f;
                     return name === 'Корзина';
                   });
                   
-                  if (!hasMain) normalizedFolders.unshift('Главная');
-                  if (!hasTrash) normalizedFolders.push('Корзина');
+                  if (!hasMain) restoredFolders.unshift('Главная');
+                  if (!hasTrash) restoredFolders.push('Корзина');
                   
                   const restoredSettings = backup.settings || {
                     fontSize: 16,
@@ -216,8 +216,8 @@ const SettingsScreen = ({
                     useCalendar: false
                   };
                   
-                  await AsyncStorage.setItem('notes', JSON.stringify(normalizedNotes));
-                  await AsyncStorage.setItem('folders', JSON.stringify(normalizedFolders));
+                  await AsyncStorage.setItem('notes', JSON.stringify(restoredNotes));
+                  await AsyncStorage.setItem('folders', JSON.stringify(restoredFolders));
                   await AsyncStorage.setItem('settings', JSON.stringify(restoredSettings));
                   
                   if (loadData) {
@@ -232,7 +232,7 @@ const SettingsScreen = ({
                   
                   Alert.alert(
                     '✅ Успех', 
-                    `Восстановлено ${normalizedNotes.length} заметок и ${normalizedFolders.length} папок.`,
+                    `Восстановлено ${restoredNotes.length} заметок и ${restoredFolders.length} папок.`,
                     [{ text: 'OK', onPress: () => setIsRestoring(false) }]
                   );
                 } catch (saveError) {
