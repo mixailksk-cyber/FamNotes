@@ -156,7 +156,6 @@ const NoteActionDialog = ({
     const endStr = formatForGoogle(endDate);
     const timezone = getTimezone();
     
-    // Проверенный рабочий URL для Google Календаря
     const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodedTitle}&details=${encodedDesc}&dates=${startStr}/${endStr}&ctz=${timezone}`;
     
     try {
@@ -550,9 +549,6 @@ END:VCALENDAR`;
               }}>
                 <Text style={{ fontSize: 12, color: brandColor }}>
                   Напоминание установлено на {formatReminderTime(reminderTime)}
-                </Text>
-                <Text style={{ fontSize: 10, color: '#666', marginTop: 4 }}>
-                  Уведомления будут повторяться каждые 10 минут
                 </Text>
               </View>
             )}
