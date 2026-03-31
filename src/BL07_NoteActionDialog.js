@@ -102,15 +102,15 @@ const NoteActionDialog = ({
   
   const hasActiveReminder = reminderTime && reminderTime > Date.now();
   
-  const formatForCalendar = (date) => {
-    // Формат для Google Календаря: YYYYMMDDTHHMMSSZ
+  const formatForGoogleCalendar = (date) => {
+    // Формат для Google Календаря без Z (локальное время)
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const seconds = date.getSeconds().toString().padStart(2, '0');
-    return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+    return `${year}${month}${day}T${hours}${minutes}${seconds}`;
   };
   
   // Добавление в Google Календарь с выбранной датой и временем
@@ -148,12 +148,13 @@ const NoteActionDialog = ({
       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0);
     }
     
-    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+    // Конец события - через 24 часа (сутки)
+    const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
     
     const encodedTitle = encodeURIComponent(title);
     const encodedDesc = encodeURIComponent(content);
-    const startStr = formatForCalendar(startDate);
-    const endStr = formatForCalendar(endDate);
+    const startStr = formatForGoogleCalendar(startDate);
+    const endStr = formatForGoogleCalendar(endDate);
     const timezone = getTimezone();
     
     const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodedTitle}&details=${encodedDesc}&dates=${startStr}/${endStr}&ctz=${timezone}`;
@@ -202,10 +203,18 @@ const NoteActionDialog = ({
       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0);
     }
     
-    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+    // Конец события - через 24 часа (сутки)
+    const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
     
     const formatForIcs = (date) => {
-      return date.toISOString().replace(/[-:]/g, '').split('.')[0];
+      // Формат для ICS: YYYYMMDDTHHMMSS
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const seconds = date.getSeconds().toString().padStart(2, '0');
+      return `${year}${month}${day}T${hours}${minutes}${seconds}`;
     };
     
     const icsContent = `BEGIN:VCALENDAR
@@ -290,7 +299,7 @@ END:VCALENDAR`;
     const dateStr = `${tomorrow.getDate().toString().padStart(2, '0')}.${(tomorrow.getMonth() + 1).toString().padStart(2, '0')}.${tomorrow.getFullYear()}`;
     const timeStr = '09:00';
     
-    const calendarText = `📅 СОБЫТИЕ В КАЛЕНДАРЬ\n\nНазвание: ${title}\nОписание: ${content}\nДата: ${dateStr}\nВремя: ${timeStr}\nПродолжительность: 1 час\n\n---\nСоздано в FamNotes`;
+    const calendarText = `📅 СОБЫТИЕ В КАЛЕНДАРЬ\n\nНазвание: ${title}\nОписание: ${content}\nДата: ${dateStr}\nВремя: ${timeStr}\nПродолжительность: 24 часа\n\n---\nСоздано в FamNotes`;
     
     await Clipboard.setString(calendarText);
     Alert.alert('✅ Скопировано', 'Текст скопирован в буфер обмена. Вставьте его при создании события в календаре');
