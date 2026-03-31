@@ -97,6 +97,7 @@ const sendNotification = (noteId, title, content) => {
   });
 };
 
+// Планирование одного уведомления (без повторения)
 export const scheduleReminder = (noteId, title, content, date, useCalendar = false) => {
   const notificationDate = new Date(date);
   const now = new Date();
@@ -108,59 +109,38 @@ export const scheduleReminder = (noteId, title, content, date, useCalendar = fal
   
   console.log('Scheduling reminder for:', notificationDate);
   
+  // Отменяем существующее напоминание
   cancelReminder(noteId);
   
-  const delay = notificationDate.getTime() - now.getTime();
-  
-  const timeoutId = setTimeout(() => {
-    sendNotification(noteId, title, content);
-    
-    const intervalId = setInterval(() => {
-      sendNotification(noteId, title, content);
-    }, 10 * 60 * 1000);
-    
-    if (activeTimeouts[noteId]) {
-      clearTimeout(activeTimeouts[noteId]);
-    }
-    activeTimeouts[noteId] = intervalId;
-  }, delay);
-  
-  if (activeTimeouts[noteId]) {
-    clearTimeout(activeTimeouts[noteId]);
-  }
-  activeTimeouts[noteId] = timeoutId;
+  // Планируем одно уведомление
+  PushNotification.localNotificationSchedule({
+    channelId: 'famnotes_channel',
+    title: getNotificationTexts(title, content).notificationTitle,
+    message: getNotificationTexts(title, content).notificationMessage,
+    date: notificationDate,
+    allowWhileIdle: true,
+    userInfo: { noteId: noteId },
+    vibrate: true,
+    vibration: 300,
+    playSound: true,
+    soundName: 'default',
+    importance: 'high',
+    priority: 'high',
+    visibility: 'public',
+    autoCancel: false,
+  });
   
   return true;
 };
 
-const activeTimeouts = {};
-
+// Отмена напоминания
 export const cancelReminder = (noteId) => {
-  if (activeTimeouts[noteId]) {
-    if (typeof activeTimeouts[noteId] === 'number') {
-      clearTimeout(activeTimeouts[noteId]);
-      clearInterval(activeTimeouts[noteId]);
-    } else {
-      clearInterval(activeTimeouts[noteId]);
-    }
-    delete activeTimeouts[noteId];
-  }
-  
   PushNotification.cancelLocalNotifications({ noteId: noteId });
+  console.log('❌ Cancelled reminders for note:', noteId);
 };
 
+// Отмена всех напоминаний
 export const cancelAllReminders = () => {
-  Object.keys(activeTimeouts).forEach(noteId => {
-    if (activeTimeouts[noteId]) {
-      if (typeof activeTimeouts[noteId] === 'number') {
-        clearTimeout(activeTimeouts[noteId]);
-        clearInterval(activeTimeouts[noteId]);
-      } else {
-        clearInterval(activeTimeouts[noteId]);
-      }
-    }
-  });
-  Object.keys(activeTimeouts).forEach(key => delete activeTimeouts[key]);
-  
   PushNotification.cancelAllLocalNotifications();
+  console.log('❌ Cancelled all reminders');
 };
