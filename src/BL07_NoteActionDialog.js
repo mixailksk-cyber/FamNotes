@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Modal, Animated, Platform, Alert, ScrollView, Share, Clipboard, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Animated, Platform, Alert, ScrollView, Linking } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { width, getBrandColor } from './BL02_Constants';
-import RNFS from 'react-native-fs';
 
 const NoteActionDialog = ({ 
   visible, 
@@ -37,7 +36,6 @@ const NoteActionDialog = ({
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedHour, setSelectedHour] = useState(0);
   const [selectedMinute, setSelectedMinute] = useState(0);
-  const [calendarDateTime, setCalendarDateTime] = useState(null);
   
   // Получение часового пояса устройства
   const getTimezone = () => {
@@ -90,18 +88,6 @@ const NoteActionDialog = ({
   
   const brandColor = getBrandColor(settings);
   
-  const formatReminderTime = (timestamp) => {
-    if (!timestamp) return null;
-    const date = new Date(timestamp);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${day}.${month} ${hours}:${minutes}`;
-  };
-  
-  const hasActiveReminder = reminderTime && reminderTime > Date.now();
-  
   // Форматирование даты для Google
   const formatForGoogle = (date) => {
     const year = date.getFullYear();
@@ -114,41 +100,29 @@ const NoteActionDialog = ({
   };
   
   // Добавление в Google Календарь как мероприятие
-  const openCalendarDateTimePicker = () => {
-    setCalendarDateTime('calendar');
+  const openDateTimePicker = () => {
     setShowDateTimePicker(true);
   };
   
   const addToGoogleCalendar = async () => {
     if (!currentNote) return;
-    if (!calendarDateTime) {
-      openCalendarDateTimePicker();
-      return;
-    }
     
     const title = currentNote.title || 'Напоминание';
     const content = currentNote.content || '';
     
     const now = new Date();
-    let startDate;
+    let year = now.getFullYear();
+    let month = selectedMonth;
+    let day = selectedDay;
     
-    if (calendarDateTime === 'calendar') {
-      let year = now.getFullYear();
-      let month = selectedMonth;
-      let day = selectedDay;
-      
-      if (month < now.getMonth()) {
-        year = now.getFullYear() + 1;
-      } else if (month === now.getMonth() && day < now.getDate()) {
-        year = now.getFullYear() + 1;
-      }
-      
-      startDate = new Date(year, month, day, selectedHour, selectedMinute);
-    } else {
-      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0);
+    if (month < now.getMonth()) {
+      year = now.getFullYear() + 1;
+    } else if (month === now.getMonth() && day < now.getDate()) {
+      year = now.getFullYear() + 1;
     }
     
-    const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+    const startDate = new Date(year, month, day, selectedHour, selectedMinute);
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
     
     const encodedTitle = encodeURIComponent(title);
     const encodedDesc = encodeURIComponent(content);
@@ -160,168 +134,12 @@ const NoteActionDialog = ({
     
     try {
       await Linking.openURL(url);
-      setCalendarDateTime(null);
+      setShowDateTimePicker(false);
       onClose();
     } catch (error) {
       console.error('Error opening calendar:', error);
       Alert.alert('Ошибка', 'Не удалось открыть Google Календарь. Проверьте интернет-соединение.');
     }
-  };
-  
-  // Добавление в Google Keep
-  const addToGoogleKeep = async () => {
-    if (!currentNote) return;
-    
-    const title = currentNote.title || 'Напоминание';
-    const content = currentNote.content || '';
-    
-    const encodedTitle = encodeURIComponent(title);
-    const encodedDesc = encodeURIComponent(content);
-    
-    const url = `https://keep.google.com/u/0/#NEW?title=${encodedTitle}&text=${encodedDesc}`;
-    
-    try {
-      await Linking.openURL(url);
-      onClose();
-    } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось открыть Google Keep');
-    }
-  };
-  
-  // Создание .ics файла с выбранной датой
-  const openIcsDateTimePicker = () => {
-    setCalendarDateTime('ics');
-    setShowDateTimePicker(true);
-  };
-  
-  const createIcsFile = async () => {
-    if (!currentNote) return;
-    if (!calendarDateTime) {
-      openIcsDateTimePicker();
-      return;
-    }
-    
-    const title = currentNote.title || 'Напоминание';
-    const content = currentNote.content || '';
-    
-    const now = new Date();
-    let startDate;
-    
-    if (calendarDateTime === 'ics') {
-      let year = now.getFullYear();
-      let month = selectedMonth;
-      let day = selectedDay;
-      
-      if (month < now.getMonth()) {
-        year = now.getFullYear() + 1;
-      } else if (month === now.getMonth() && day < now.getDate()) {
-        year = now.getFullYear() + 1;
-      }
-      
-      startDate = new Date(year, month, day, selectedHour, selectedMinute);
-    } else {
-      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0);
-    }
-    
-    const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
-    
-    const formatForIcs = (date) => {
-      const year = date.getFullYear();
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      const seconds = date.getSeconds().toString().padStart(2, '0');
-      return `${year}${month}${day}T${hours}${minutes}${seconds}`;
-    };
-    
-    const icsContent = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//FamNotes//RU
-CALSCALE:GREGORIAN
-BEGIN:VEVENT
-UID:${Date.now()}@famnotes
-DTSTAMP:${formatForIcs(new Date())}
-DTSTART:${formatForIcs(startDate)}
-DTEND:${formatForIcs(endDate)}
-SUMMARY:${title.replace(/[\\,;]/g, '').substring(0, 100)}
-DESCRIPTION:${content.replace(/[\\,;]/g, '').substring(0, 500)}
-END:VEVENT
-END:VCALENDAR`;
-    
-    const fileName = `FamNote_${Date.now()}.ics`;
-    let savePath = null;
-    let saveLocation = '';
-    
-    try {
-      if (RNFS.DownloadDirectoryPath) {
-        savePath = RNFS.DownloadDirectoryPath + '/' + fileName;
-        saveLocation = 'папку "Загрузки"';
-        await RNFS.writeFile(savePath, icsContent, 'utf8');
-      } else if (RNFS.ExternalDirectoryPath) {
-        savePath = RNFS.ExternalDirectoryPath + '/' + fileName;
-        saveLocation = 'внешнее хранилище';
-        await RNFS.writeFile(savePath, icsContent, 'utf8');
-      } else if (RNFS.ExternalStorageDirectoryPath) {
-        const downloadPath = RNFS.ExternalStorageDirectoryPath + '/Download';
-        const dirExists = await RNFS.exists(downloadPath);
-        if (!dirExists) {
-          await RNFS.mkdir(downloadPath);
-        }
-        savePath = downloadPath + '/' + fileName;
-        saveLocation = 'папку "Download"';
-        await RNFS.writeFile(savePath, icsContent, 'utf8');
-      } else {
-        savePath = RNFS.TemporaryDirectoryPath + '/' + fileName;
-        saveLocation = 'временную папку';
-        await RNFS.writeFile(savePath, icsContent, 'utf8');
-      }
-      
-      Alert.alert(
-        '✅ Файл создан',
-        `Файл ${fileName} сохранен в ${saveLocation}\n\nОткройте его через файловый менеджер и выберите "Импортировать в календарь"`,
-        [
-          { text: 'OK', style: 'cancel' },
-          { 
-            text: 'Поделиться', 
-            onPress: async () => {
-              try {
-                await Share.share({
-                  title: title,
-                  url: `file://${savePath}`,
-                });
-              } catch (e) {
-                Alert.alert('Ошибка', 'Не удалось открыть файл');
-              }
-            }
-          }
-        ]
-      );
-      setCalendarDateTime(null);
-    } catch (error) {
-      console.error('Error creating ICS file:', error);
-      Alert.alert('❌ Ошибка', 'Не удалось создать файл. Проверьте разрешения на запись.');
-    }
-  };
-  
-  // Копирование текста для календаря
-  const copyToClipboard = async () => {
-    if (!currentNote) return;
-    
-    const title = currentNote.title || 'Напоминание';
-    const content = currentNote.content || '';
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const dateStr = `${tomorrow.getDate().toString().padStart(2, '0')}.${(tomorrow.getMonth() + 1).toString().padStart(2, '0')}.${tomorrow.getFullYear()}`;
-    const timeStr = '09:00';
-    
-    const calendarText = `📅 СОБЫТИЕ В КАЛЕНДАРЬ\n\nНазвание: ${title}\nОписание: ${content}\nДата: ${dateStr}\nВремя: ${timeStr}\nПродолжительность: 24 часа\n\n---\nСоздано в FamNotes`;
-    
-    await Clipboard.setString(calendarText);
-    Alert.alert('✅ Скопировано', 'Текст скопирован в буфер обмена. Вставьте его при создании события в календаре');
-    onClose();
   };
   
   const getDaysList = () => {
@@ -357,52 +175,6 @@ END:VCALENDAR`;
     return date.getMonth() === month && date.getDate() === day;
   };
   
-  const handleSetReminder = () => {
-    const now = new Date();
-    let year = now.getFullYear();
-    let month = selectedMonth;
-    let day = selectedDay;
-    
-    if (month < now.getMonth()) {
-      year = now.getFullYear() + 1;
-    } else if (month === now.getMonth() && day < now.getDate()) {
-      year = now.getFullYear() + 1;
-    } else if (month === now.getMonth() && day === now.getDate()) {
-      const selectedTime = new Date(year, month, day, selectedHour, selectedMinute);
-      if (selectedTime <= now) {
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        year = tomorrow.getFullYear();
-        month = tomorrow.getMonth();
-        day = tomorrow.getDate();
-      }
-    }
-    
-    if (!isValidDate(day, month, year)) {
-      const lastDay = new Date(year, month + 1, 0).getDate();
-      day = Math.min(day, lastDay);
-    }
-    
-    const reminderDate = new Date(year, month, day, selectedHour, selectedMinute);
-    
-    if (reminderDate > now) {
-      onSetReminder(reminderDate.getTime());
-      setShowDateTimePicker(false);
-      onClose();
-    } else {
-      Alert.alert('Ошибка', 'Выбранная дата и время уже прошли');
-    }
-  };
-  
-  const handleDisableReminder = () => {
-    onSetReminder(null);
-    onClose();
-  };
-  
-  const openDateTimePicker = () => {
-    setShowDateTimePicker(true);
-  };
-  
   if (!visible) return null;
   
   return (
@@ -428,128 +200,40 @@ END:VCALENDAR`;
             </Text>
             
             {!isInTrash && (
-              <>
-                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
-                  <TouchableOpacity 
-                    onPress={() => { onTogglePin(); onClose(); }} 
-                    style={{ 
-                      flex: 1,
-                      padding: 12, 
-                      alignItems: 'center', 
-                      flexDirection: 'row',
-                      justifyContent: 'center',
-                      backgroundColor: brandColor,
-                      borderRadius: 8,
-                    }}>
-                    <Icon name="push-pin" size={20} color="white" />
-                    <Text style={{ fontSize: 14, color: 'white', marginLeft: 6 }}>
-                      {isPinned ? "Открепить" : "Закрепить"}
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    onPress={hasActiveReminder ? handleDisableReminder : openDateTimePicker} 
-                    style={{ 
-                      flex: 1,
-                      padding: 12, 
-                      alignItems: 'center', 
-                      flexDirection: 'row',
-                      justifyContent: 'center',
-                      backgroundColor: brandColor,
-                      borderRadius: 8,
-                    }}>
-                    <Icon name="alarm" size={20} color="white" />
-                    <Text style={{ fontSize: 14, color: 'white', marginLeft: 6 }}>
-                      {hasActiveReminder ? "Отключить" : "Напомнить"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                
-                {/* Кнопка Google Календарь */}
+              <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
                 <TouchableOpacity 
-                  onPress={addToGoogleCalendar} 
+                  onPress={() => { onTogglePin(); onClose(); }} 
                   style={{ 
+                    flex: 1,
                     padding: 12, 
                     alignItems: 'center', 
                     flexDirection: 'row',
                     justifyContent: 'center',
-                    backgroundColor: '#4285F4',
+                    backgroundColor: brandColor,
                     borderRadius: 8,
-                    marginBottom: 8,
+                  }}>
+                  <Icon name="push-pin" size={20} color="white" />
+                  <Text style={{ fontSize: 14, color: 'white', marginLeft: 6 }}>
+                    {isPinned ? "Открепить" : "Закрепить"}
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  onPress={openDateTimePicker} 
+                  style={{ 
+                    flex: 1,
+                    padding: 12, 
+                    alignItems: 'center', 
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    backgroundColor: brandColor,
+                    borderRadius: 8,
                   }}>
                   <Icon name="calendar-today" size={20} color="white" />
                   <Text style={{ fontSize: 14, color: 'white', marginLeft: 6 }}>
-                    📅 Google Календарь
+                    📅 Напомнить
                   </Text>
                 </TouchableOpacity>
-                
-                {/* Кнопка Google Keep */}
-                <TouchableOpacity 
-                  onPress={addToGoogleKeep} 
-                  style={{ 
-                    padding: 12, 
-                    alignItems: 'center', 
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    backgroundColor: '#F4B400',
-                    borderRadius: 8,
-                    marginBottom: 8,
-                  }}>
-                  <Icon name="note" size={20} color="white" />
-                  <Text style={{ fontSize: 14, color: 'white', marginLeft: 6 }}>
-                    📝 Google Keep
-                  </Text>
-                </TouchableOpacity>
-                
-                {/* Кнопка .ics файл */}
-                <TouchableOpacity 
-                  onPress={createIcsFile} 
-                  style={{ 
-                    padding: 12, 
-                    alignItems: 'center', 
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    backgroundColor: '#4CAF50',
-                    borderRadius: 8,
-                    marginBottom: 8,
-                  }}>
-                  <Icon name="insert-drive-file" size={20} color="white" />
-                  <Text style={{ fontSize: 14, color: 'white', marginLeft: 6 }}>
-                    📁 .ics файл (для любого календаря)
-                  </Text>
-                </TouchableOpacity>
-                
-                {/* Кнопка копирования текста */}
-                <TouchableOpacity 
-                  onPress={copyToClipboard} 
-                  style={{ 
-                    padding: 12, 
-                    alignItems: 'center', 
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    backgroundColor: '#FF9800',
-                    borderRadius: 8,
-                    marginBottom: 8,
-                  }}>
-                  <Icon name="content-copy" size={20} color="white" />
-                  <Text style={{ fontSize: 14, color: 'white', marginLeft: 6 }}>
-                    📋 Скопировать текст
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
-            
-            {hasActiveReminder && !isInTrash && (
-              <View style={{ 
-                padding: 8, 
-                alignItems: 'center',
-                marginBottom: 8,
-                backgroundColor: '#F5F5F5',
-                borderRadius: 8
-              }}>
-                <Text style={{ fontSize: 12, color: brandColor }}>
-                  Напоминание установлено на {formatReminderTime(reminderTime)}
-                </Text>
               </View>
             )}
             
@@ -619,10 +303,7 @@ END:VCALENDAR`;
       </Modal>
       
       {/* Модальное окно выбора даты и времени */}
-      <Modal visible={showDateTimePicker} transparent animationType="fade" onRequestClose={() => {
-        setShowDateTimePicker(false);
-        setCalendarDateTime(null);
-      }}>
+      <Modal visible={showDateTimePicker} transparent animationType="fade" onRequestClose={() => setShowDateTimePicker(false)}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <View style={{ 
             backgroundColor: 'white', 
@@ -702,23 +383,11 @@ END:VCALENDAR`;
             </View>
             
             <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 16 }}>
-              <TouchableOpacity onPress={() => {
-                setShowDateTimePicker(false);
-                setCalendarDateTime(null);
-              }} style={{ padding: 12 }}>
+              <TouchableOpacity onPress={() => setShowDateTimePicker(false)} style={{ padding: 12 }}>
                 <Text style={{ color: '#999', fontSize: 16 }}>Отмена</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => {
-                setShowDateTimePicker(false);
-                if (calendarDateTime === 'calendar') {
-                  addToGoogleCalendar();
-                } else if (calendarDateTime === 'ics') {
-                  createIcsFile();
-                } else {
-                  handleSetReminder();
-                }
-              }} style={{ padding: 12 }}>
-                <Text style={{ color: brandColor, fontWeight: 'bold', fontSize: 16 }}>Выбрать</Text>
+              <TouchableOpacity onPress={addToGoogleCalendar} style={{ padding: 12 }}>
+                <Text style={{ color: brandColor, fontWeight: 'bold', fontSize: 16 }}>Добавить</Text>
               </TouchableOpacity>
             </View>
           </View>
