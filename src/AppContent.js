@@ -11,7 +11,6 @@ import EditNoteScreen from './BL17_EditNoteScreen';
 import SearchScreen from './BL20_SearchScreen';
 import NoteActionDialog from './BL07_NoteActionDialog';
 import { useNotesData } from './BL12_DataHooks';
-import { scheduleReminder, cancelReminder } from './BL21_NotificationService';
 
 const AppContent = () => {
   const insets = useSafeAreaInsets();
@@ -154,7 +153,6 @@ const AppContent = () => {
       deleted: false,
       pinned: false,
       locked: false,
-      reminder: null,
       isNew: true
     };
     setSelectedNote(newNote);
@@ -219,28 +217,6 @@ const AppContent = () => {
   const handleTogglePin = (noteId) => {
     const updatedNotes = notes.map(n => n.id === noteId ? { ...n, pinned: !n.pinned, updatedAt: Date.now() } : n);
     saveNotes(updatedNotes);
-  };
-  
-  const handleSetReminder = (noteId, time) => {
-    const updatedNotes = notes.map(n => 
-      n.id === noteId ? { ...n, reminder: time, updatedAt: Date.now() } : n
-    );
-    saveNotes(updatedNotes);
-    
-    if (time) {
-      const note = notes.find(n => n.id === noteId);
-      const date = new Date(time);
-      
-      if (time > Date.now()) {
-        scheduleReminder(noteId, note?.title, note?.content, time, settings.useCalendar);
-        Alert.alert('✅ Напоминание установлено', `Напоминание установлено на ${date.toLocaleString()}`);
-      } else {
-        Alert.alert('❌ Ошибка', 'Дата и время должны быть в будущем');
-      }
-    } else {
-      cancelReminder(noteId);
-      Alert.alert('🗑 Напоминание отменено', 'Напоминание для этой заметки отменено');
-    }
   };
   
   const handleQuickDelete = (note) => {
@@ -362,12 +338,10 @@ const AppContent = () => {
           setSelectedNoteForAction(null);
         }} 
         onTogglePin={() => handleTogglePin(selectedNoteForAction.id)}
-        onSetReminder={(time) => handleSetReminder(selectedNoteForAction.id, time)}
         isPinned={selectedNoteForAction?.pinned || false}
         isInTrash={isInTrashFolder}
-        reminderTime={selectedNoteForAction?.reminder || null}
-        settings={settings}
         currentNote={selectedNoteForAction}
+        settings={settings}
       />
     );
   };
