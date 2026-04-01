@@ -22,6 +22,7 @@ const AppContent = () => {
   const [selectedNoteForAction, setSelectedNoteForAction] = React.useState(null);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isSaving, setIsSaving] = React.useState(false);
+  const [pendingAction, setPendingAction] = React.useState(null);
   
   const { notes, folders, settings, saveNotes, saveFolders, saveSettings, loadData } = useNotesData();
 
@@ -220,6 +221,9 @@ const AppContent = () => {
   };
   
   const handleQuickDelete = (note) => {
+    const noteId = note.id;
+    const wasInTrash = note.folder === 'Корзина';
+    
     if (note.folder === 'Корзина') {
       const updatedNotes = notes.filter(n => n.id !== note.id);
       saveNotes(updatedNotes);
@@ -229,7 +233,23 @@ const AppContent = () => {
       const newNotes = [...notes.slice(0, index), updatedNote, ...notes.slice(index + 1)];
       saveNotes(newNotes);
     }
+    
+    // Сохраняем информацию о том, что нужно вернуться в режим просмотра списка
+    setPendingAction({ type: 'delete', noteId, wasInTrash });
   };
+  
+  // Эффект для обработки возврата после удаления
+  useEffect(() => {
+    if (pendingAction && pendingAction.type === 'delete') {
+      // Сбрасываем pendingAction
+      setPendingAction(null);
+      // Убеждаемся, что мы на экране списка заметок
+      if (currentScreen !== 'notes') {
+        setCurrentScreen('notes');
+      }
+      setSelectedNote(null);
+    }
+  }, [pendingAction, currentScreen]);
   
   const handleEmptyTrash = () => {
     Alert.alert(
@@ -307,42 +327,44 @@ const AppContent = () => {
     const isInTrashFolder = selectedNoteForAction.folder === 'Корзина' || selectedNoteForAction.deleted === true;
     
     return (
-<NoteActionDialog 
-  visible={showNoteDialog} 
-  onClose={() => { 
-    setShowNoteDialog(false); 
-    setSelectedNoteForAction(null); 
-  }} 
-  folders={folders} 
-  currentFolder={selectedNoteForAction?.folder || currentFolder} 
-  onMove={(targetFolder) => {
-    if (isInTrashFolder) {
-      handleRestoreFromTrash(selectedNoteForAction);
-    } else {
-      handleMoveNote(selectedNoteForAction, targetFolder);
-    }
-    setShowNoteDialog(false);
-    setSelectedNoteForAction(null);
-  }} 
-  onDelete={() => {
-    if (!isInTrashFolder) {
-      handleQuickDelete(selectedNoteForAction);
-    }
-    setShowNoteDialog(false);
-    setSelectedNoteForAction(null);
-  }} 
-  onPermanentDelete={() => {
-    const updatedNotes = notes.filter(n => n.id !== selectedNoteForAction.id);
-    saveNotes(updatedNotes);
-    setShowNoteDialog(false);
-    setSelectedNoteForAction(null);
-  }} 
-  onTogglePin={() => handleTogglePin(selectedNoteForAction.id)}
-  isPinned={selectedNoteForAction?.pinned || false}
-  isInTrash={isInTrashFolder}
-  currentNote={selectedNoteForAction}
-  settings={settings}
-/>
+      <NoteActionDialog 
+        visible={showNoteDialog} 
+        onClose={() => { 
+          setShowNoteDialog(false); 
+          setSelectedNoteForAction(null); 
+        }} 
+        folders={folders} 
+        currentFolder={selectedNoteForAction?.folder || currentFolder} 
+        onMove={(targetFolder) => {
+          if (isInTrashFolder) {
+            handleRestoreFromTrash(selectedNoteForAction);
+          } else {
+            handleMoveNote(selectedNoteForAction, targetFolder);
+          }
+          setShowNoteDialog(false);
+          setSelectedNoteForAction(null);
+        }} 
+        onDelete={() => {
+          if (!isInTrashFolder) {
+            handleQuickDelete(selectedNoteForAction);
+          }
+          setShowNoteDialog(false);
+          setSelectedNoteForAction(null);
+        }} 
+        onPermanentDelete={() => {
+          const updatedNotes = notes.filter(n => n.id !== selectedNoteForAction.id);
+          saveNotes(updatedNotes);
+          setShowNoteDialog(false);
+          setSelectedNoteForAction(null);
+          // Убеждаемся, что возвращаемся на экран списка
+          setCurrentScreen('notes');
+        }} 
+        onTogglePin={() => handleTogglePin(selectedNoteForAction.id)}
+        isPinned={selectedNoteForAction?.pinned || false}
+        isInTrash={isInTrashFolder}
+        currentNote={selectedNoteForAction}
+        settings={settings}
+      />
     );
   };
   
