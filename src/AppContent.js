@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { View, FlatList, Text, TouchableOpacity, Alert, BackHandler, Platform, Linking, StatusBar } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, FlatList, Text, TouchableOpacity, Alert, BackHandler, Platform, Linking, StatusBar, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getBrandColor } from './BL02_Constants';
@@ -14,30 +14,55 @@ import { useNotesData } from './BL12_DataHooks';
 
 const AppContent = () => {
   const insets = useSafeAreaInsets();
-  const [currentScreen, setCurrentScreen] = React.useState('notes');
-  const [currentFolder, setCurrentFolder] = React.useState('Главная');
-  const [selectedNote, setSelectedNote] = React.useState(null);
-  const [navigationStack, setNavigationStack] = React.useState(['notes']);
-  const [showNoteDialog, setShowNoteDialog] = React.useState(false);
-  const [selectedNoteForAction, setSelectedNoteForAction] = React.useState(null);
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [isSaving, setIsSaving] = React.useState(false);
+  const [currentScreen, setCurrentScreen] = useState('notes');
+  const [currentFolder, setCurrentFolder] = useState('Главная');
+  const [selectedNote, setSelectedNote] = useState(null);
+  const [navigationStack, setNavigationStack] = useState(['notes']);
+  const [showNoteDialog, setShowNoteDialog] = useState(false);
+  const [selectedNoteForAction, setSelectedNoteForAction] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [pendingDeepLink, setPendingDeepLink] = useState(null);
   
   // Флаг для отслеживания, было ли приложение запущено через виджет
   const isWidgetLaunch = useRef(false);
+  // Флаг для предотвращения повторного создания заметки
+  const isCreatingNote = useRef(false);
   
   const { notes, folders, settings, saveNotes, saveFolders, saveSettings, loadData } = useNotesData();
 
-  // Функция создания новой заметки
-  const createNewNote = React.useCallback(() => {
-    if (isSaving) return;
+  // Ждем загрузки данных
+  useEffect(() => {
+    const checkDataLoaded = async () => {
+      // Ждем, пока settings загрузятся
+      if (settings && Object.keys(settings).length > 0) {
+        setIsDataLoaded(true);
+      } else {
+        // Если данных нет, пробуем загрузить еще раз
+        await loadData();
+        // Даем время на загрузку
+        setTimeout(() => {
+          setIsDataLoaded(true);
+        }, 500);
+      }
+    };
     
+    checkDataLoaded();
+  }, [settings, loadData]);
+
+  // Функция создания новой заметки (общая для всех способов)
+  const createNewNote = React.useCallback(() => {
+    if (isSaving || isCreatingNote.current) return;
+    isCreatingNote.current = true;
+    
+    const brandColor = getBrandColor(settings);
     const newNote = {
       id: Date.now().toString(),
       title: '',
       content: '',
       folder: currentFolder,
-      color: getBrandColor(settings),
+      color: brandColor,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       deleted: false,
@@ -48,6 +73,10 @@ const AppContent = () => {
     };
     setSelectedNote(newNote);
     setCurrentScreen('edit');
+    
+    setTimeout(() => {
+      isCreatingNote.current = false;
+    }, 500);
   }, [isSaving, currentFolder, settings]);
 
   // Установка напоминания
@@ -67,40 +96,47 @@ const AppContent = () => {
     Alert.alert('✅ Напоминание отменено', 'Напоминание для этой заметки отменено');
   };
 
+  // Обработка deep link (с учетом загрузки данных)
+  const processDeepLink = React.useCallback((url) => {
+    console.log('Processing deep link:', url);
+    
+    if (url && url.includes('famnotes://note/')) {
+      const noteId = url.split('famnotes://note/')[1];
+      const note = notes.find(n => n.id === noteId);
+      if (note) {
+        setSelectedNote(note);
+        setCurrentScreen('edit');
+      }
+    } else if (url && url.includes('famnotes://create')) {
+      isWidgetLaunch.current = true;
+      // Ждем загрузки данных перед созданием заметки
+      if (isDataLoaded) {
+        createNewNote();
+      } else {
+        setPendingDeepLink('create');
+      }
+    }
+  }, [notes, isDataLoaded, createNewNote]);
+
+  // Обработка отложенного deep link после загрузки данных
+  useEffect(() => {
+    if (isDataLoaded && pendingDeepLink === 'create') {
+      setPendingDeepLink(null);
+      createNewNote();
+    }
+  }, [isDataLoaded, pendingDeepLink, createNewNote]);
+
   // Обработка открытия заметки из виджета
   useEffect(() => {
     const handleDeepLink = (event) => {
-      const url = event.url;
-      console.log('Deep link received:', url);
-      
-      if (url && url.includes('famnotes://note/')) {
-        const noteId = url.split('famnotes://note/')[1];
-        const note = notes.find(n => n.id === noteId);
-        if (note) {
-          setSelectedNote(note);
-          setCurrentScreen('edit');
-        }
-      } else if (url && url.includes('famnotes://create')) {
-        isWidgetLaunch.current = true;
-        createNewNote();
-      }
+      processDeepLink(event.url);
     };
     
     const getInitialUrl = async () => {
       const initialUrl = await Linking.getInitialURL();
       if (initialUrl) {
         console.log('Initial URL:', initialUrl);
-        if (initialUrl.includes('famnotes://note/')) {
-          const noteId = initialUrl.split('famnotes://note/')[1];
-          const note = notes.find(n => n.id === noteId);
-          if (note) {
-            setSelectedNote(note);
-            setCurrentScreen('edit');
-          }
-        } else if (initialUrl.includes('famnotes://create')) {
-          isWidgetLaunch.current = true;
-          createNewNote();
-        }
+        processDeepLink(initialUrl);
       }
     };
     
@@ -111,15 +147,13 @@ const AppContent = () => {
     return () => {
       subscription.remove();
     };
-  }, [notes, createNewNote]);
+  }, [processDeepLink]);
 
-  // Сброс флага виджета
+  // Сброс флага виджета при выходе на главный экран
   useEffect(() => {
     if (currentScreen === 'notes') {
-      const timer = setTimeout(() => {
-        isWidgetLaunch.current = false;
-      }, 500);
-      return () => clearTimeout(timer);
+      // Сбрасываем флаг сразу
+      isWidgetLaunch.current = false;
     }
   }, [currentScreen]);
 
@@ -226,6 +260,9 @@ const AppContent = () => {
       
       setSelectedNote(null);
       setCurrentScreen('notes');
+      
+      // Сбрасываем флаг виджета сразу после сохранения
+      isWidgetLaunch.current = false;
     } finally {
       setTimeout(() => {
         setIsSaving(false);
@@ -270,6 +307,8 @@ const AppContent = () => {
     
     setCurrentScreen('notes');
     setSelectedNote(null);
+    // Сбрасываем флаг виджета
+    isWidgetLaunch.current = false;
   };
   
   const handleEmptyTrash = () => {
@@ -415,27 +454,34 @@ const AppContent = () => {
         )}
       </Header>
       
-      <FlatList 
-        data={sortedNotes} 
-        keyExtractor={item => item.id} 
-        renderItem={({ item }) => (
-          <NoteItem 
-            item={item} 
-            onPress={() => handleNoteOpen(item)} 
-            onLongPress={() => handleLongPressOnNote(item)}
-            settings={settings} 
-            showPin={!isInTrash}
-          />
-        )} 
-        ListEmptyComponent={
-          <View style={{ padding: 32, alignItems: 'center' }}>
-            <Text style={{ color: '#999' }}>Нет заметок</Text>
-          </View>
-        } 
-        contentContainerStyle={{ paddingBottom: 100 }}
-      />
+      {!isDataLoaded ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={brandColor} />
+          <Text style={{ marginTop: 16, color: '#666' }}>Загрузка...</Text>
+        </View>
+      ) : (
+        <FlatList 
+          data={sortedNotes} 
+          keyExtractor={item => item.id} 
+          renderItem={({ item }) => (
+            <NoteItem 
+              item={item} 
+              onPress={() => handleNoteOpen(item)} 
+              onLongPress={() => handleLongPressOnNote(item)}
+              settings={settings} 
+              showPin={!isInTrash}
+            />
+          )} 
+          ListEmptyComponent={
+            <View style={{ padding: 32, alignItems: 'center' }}>
+              <Text style={{ color: '#999' }}>Нет заметок</Text>
+            </View>
+          } 
+          contentContainerStyle={{ paddingBottom: 100 }}
+        />
+      )}
       
-      {!isInTrash && (
+      {!isInTrash && isDataLoaded && (
         <TouchableOpacity 
           style={{ 
             position: 'absolute', 
@@ -457,6 +503,16 @@ const AppContent = () => {
   );
   
   const isSelectedNoteNew = selectedNote && selectedNote.isNew === true;
+  
+  // Показываем индикатор загрузки, если данные еще не загружены и не на экране редактирования
+  if (!isDataLoaded && currentScreen !== 'edit') {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
+        <ActivityIndicator size="large" color={brandColor} />
+        <Text style={{ marginTop: 16, color: '#666' }}>Загрузка заметок...</Text>
+      </View>
+    );
+  }
   
   switch (currentScreen) {
     case 'notes':
