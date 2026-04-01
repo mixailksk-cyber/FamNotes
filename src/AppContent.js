@@ -23,43 +23,57 @@ const AppContent = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isSaving, setIsSaving] = React.useState(false);
   
-  // Флаг для отслеживания, был ли обработан deep link
-  const deepLinkProcessed = useRef(false);
+  // Флаг для отслеживания, было ли приложение запущено через виджет
+  const isWidgetLaunch = useRef(false);
+  // Флаг для отслеживания, была ли создана заметка через виджет
+  const widgetNoteCreated = useRef(false);
   
   const { notes, folders, settings, saveNotes, saveFolders, saveSettings, loadData } = useNotesData();
 
-  // Обработка открытия заметки из виджета и создания заметки из виджета
+  // Функция создания новой заметки (общая для всех способов)
+  const createNewNote = React.useCallback(() => {
+    if (isSaving) return;
+    
+    const newNote = {
+      id: Date.now().toString(),
+      title: '',
+      content: '',
+      folder: currentFolder,
+      color: getBrandColor(settings),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      deleted: false,
+      pinned: false,
+      locked: false,
+      isNew: true,
+      calendarEventId: null
+    };
+    setSelectedNote(newNote);
+    setCurrentScreen('edit');
+  }, [isSaving, currentFolder, settings]);
+
+  // Обработка открытия заметки из виджета
   useEffect(() => {
     const handleDeepLink = (event) => {
-      // Если deep link уже был обработан, игнорируем
-      if (deepLinkProcessed.current) {
-        console.log('Deep link already processed, ignoring');
-        return;
-      }
-      
       const url = event.url;
       console.log('Deep link received:', url);
+      
       if (url && url.includes('famnotes://note/')) {
         const noteId = url.split('famnotes://note/')[1];
         const note = notes.find(n => n.id === noteId);
         if (note) {
-          deepLinkProcessed.current = true;
           setSelectedNote(note);
           setCurrentScreen('edit');
         }
       } else if (url && url.includes('famnotes://create')) {
-        deepLinkProcessed.current = true;
-        handleAddNote();
+        // Отмечаем, что запуск через виджет
+        isWidgetLaunch.current = true;
+        // Создаем заметку через общую функцию
+        createNewNote();
       }
     };
     
     const getInitialUrl = async () => {
-      // Если deep link уже был обработан, не обрабатываем повторно
-      if (deepLinkProcessed.current) {
-        console.log('Deep link already processed, skipping initial URL');
-        return;
-      }
-      
       const initialUrl = await Linking.getInitialURL();
       if (initialUrl) {
         console.log('Initial URL:', initialUrl);
@@ -67,13 +81,14 @@ const AppContent = () => {
           const noteId = initialUrl.split('famnotes://note/')[1];
           const note = notes.find(n => n.id === noteId);
           if (note) {
-            deepLinkProcessed.current = true;
             setSelectedNote(note);
             setCurrentScreen('edit');
           }
         } else if (initialUrl.includes('famnotes://create')) {
-          deepLinkProcessed.current = true;
-          handleAddNote();
+          // Отмечаем, что запуск через виджет
+          isWidgetLaunch.current = true;
+          // Создаем заметку через общую функцию
+          createNewNote();
         }
       }
     };
@@ -85,19 +100,28 @@ const AppContent = () => {
     return () => {
       subscription.remove();
     };
-  }, [notes]);
+  }, [notes, createNewNote]);
 
-  // Сброс флага deep link при возврате на главный экран
+  // Сброс флага виджета после выхода из режима редактирования
   useEffect(() => {
-    if (currentScreen === 'notes') {
-      // Не сбрасываем сразу, чтобы не мешать навигации
-      // Сбрасываем через небольшую задержку, чтобы не перехватывать повторные вызовы
-      const timer = setTimeout(() => {
-        deepLinkProcessed.current = false;
-      }, 500);
-      return () => clearTimeout(timer);
+    if (currentScreen !== 'edit') {
+      // Если вышли из режима редактирования и заметка была создана через виджет
+      if (widgetNoteCreated.current) {
+        widgetNoteCreated.current = false;
+      }
+      // Сбрасываем флаг запуска через виджет после завершения действия
+      if (isWidgetLaunch.current && currentScreen === 'notes') {
+        isWidgetLaunch.current = false;
+      }
     }
   }, [currentScreen]);
+
+  // Отслеживаем создание заметки через виджет
+  useEffect(() => {
+    if (selectedNote && selectedNote.isNew && isWidgetLaunch.current) {
+      widgetNoteCreated.current = true;
+    }
+  }, [selectedNote]);
 
   // Обработка кнопки "Назад" на Android
   useEffect(() => {
@@ -171,32 +195,15 @@ const AppContent = () => {
   const isInTrash = currentFolder === 'Корзина';
   
   const handleAddNote = () => {
-    if (isSaving) return;
-    console.log('handleAddNote called, currentScreen:', currentScreen);
-    
-    const newNote = {
-      id: Date.now().toString(),
-      title: '',
-      content: '',
-      folder: currentFolder,
-      color: brandColor,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      deleted: false,
-      pinned: false,
-      locked: false,
-      isNew: true,
-      calendarEventId: null
-    };
-    setSelectedNote(newNote);
-    setCurrentScreen('edit');
+    // При создании заметки через кнопку "+" сбрасываем флаг виджета
+    isWidgetLaunch.current = false;
+    widgetNoteCreated.current = false;
+    createNewNote();
   };
   
   const handleSaveNote = (updatedNote) => {
     if (isSaving) return;
     setIsSaving(true);
-    
-    console.log('handleSaveNote called, isNew:', updatedNote?.isNew);
     
     try {
       if (Array.isArray(updatedNote)) {
@@ -252,7 +259,6 @@ const AppContent = () => {
     saveNotes(updatedNotes);
   };
   
-  // Функция отмены напоминания (удаляем calendarEventId)
   const handleCancelReminder = (noteId) => {
     const updatedNotes = notes.map(n => 
       n.id === noteId ? { ...n, calendarEventId: null, updatedAt: Date.now() } : n
