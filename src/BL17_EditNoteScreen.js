@@ -26,8 +26,7 @@ const EditNoteScreen = ({
     createdAt: Date.now(), 
     updatedAt: Date.now(), 
     deleted: false,
-    locked: false,
-    reminder: null
+    locked: false
   });
   const [showColor, setShowColor] = useState(false);
   const [isEditing, setIsEditing] = useState(isNewNote || false);
@@ -65,20 +64,6 @@ const EditNoteScreen = ({
     };
   }, []);
 
-  // Фокус в поле текста при нажатии на любую область
-  const handleContentPress = () => {
-    if (isEditing && !isInTrash && contentInputRef.current) {
-      contentInputRef.current.focus();
-    }
-  };
-
-  // Фокус в поле заголовка при нажатии на заголовок
-  const handleTitlePress = () => {
-    if (isEditing && !isInTrash && titleInputRef.current) {
-      titleInputRef.current.focus();
-    }
-  };
-
   const handleShare = async () => {
     try {
       const message = note.title ? `${note.title}\n\n${note.content}` : note.content;
@@ -110,7 +95,7 @@ const EditNoteScreen = ({
       return selectedNote.title !== note.title || selectedNote.content !== note.content || selectedNote.color !== note.color;
     };
     
-    if (hasChanges() && !isInTrash) {
+    if (hasChanges() && !isInTrash && isEditing) {
       Alert.alert(
         'Несохраненные изменения',
         'У вас есть несохраненные изменения. Выйти без сохранения?',
@@ -165,7 +150,6 @@ const EditNoteScreen = ({
 
   const headerColor = note.color || brandColor;
   
-  // Кнопка поднимается над клавиатурой с отступом -190 (поднимается на 190px выше)
   const buttonBottom = keyboardVisible 
     ? Math.max(0, keyboardHeight - 190)
     : insets.bottom + 24;
@@ -201,7 +185,7 @@ const EditNoteScreen = ({
           </TouchableOpacity>
         </Header>
 
-        <TouchableWithoutFeedback onPress={handleContentPress}>
+        <TouchableWithoutFeedback>
           <ScrollView 
             ref={scrollViewRef}
             style={{ flex: 1 }}
@@ -211,20 +195,21 @@ const EditNoteScreen = ({
           >
             <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
               {isEditing && !isInTrash ? (
-                <TouchableWithoutFeedback onPress={handleTitlePress}>
-                  <TextInput 
-                    ref={titleInputRef}
-                    style={{ fontSize: settings.fontSize + 2, fontWeight: 'bold', paddingVertical: 8, color: '#333' }} 
-                    placeholder="Заголовок" 
-                    placeholderTextColor="#999" 
-                    maxLength={TITLE_MAX_LENGTH} 
-                    value={note.title} 
-                    onChangeText={t => setNote({ ...note, title: t })}
-                    editable={!isInTrash && isEditing}
-                  />
-                </TouchableWithoutFeedback>
+                <TextInput 
+                  ref={titleInputRef}
+                  style={{ fontSize: settings.fontSize + 2, fontWeight: 'bold', paddingVertical: 8, color: '#333' }} 
+                  placeholder="Заголовок" 
+                  placeholderTextColor="#999" 
+                  maxLength={TITLE_MAX_LENGTH} 
+                  value={note.title} 
+                  onChangeText={t => setNote({ ...note, title: t })}
+                  editable={!isInTrash && isEditing}
+                />
               ) : (
-                <Text style={{ fontSize: settings.fontSize + 2, fontWeight: 'bold', paddingVertical: 8, color: '#333' }}>
+                <Text 
+                  selectable={true}
+                  style={{ fontSize: settings.fontSize + 2, fontWeight: 'bold', paddingVertical: 8, color: '#333' }}
+                >
                   {note.title || 'Заголовок'}
                 </Text>
               )}
@@ -248,7 +233,6 @@ const EditNoteScreen = ({
               <Text 
                 selectable={true}
                 style={{ fontSize: settings.fontSize, paddingHorizontal: 16, paddingVertical: 12, color: '#333', lineHeight: settings.fontSize * 1.5 }}
-                onPress={handleEditPress}
               >
                 {note.content || '...'}
               </Text>
