@@ -25,12 +25,10 @@ const AppContent = () => {
   
   // Флаг для отслеживания, было ли приложение запущено через виджет
   const isWidgetLaunch = useRef(false);
-  // Флаг для отслеживания, была ли создана заметка через виджет
-  const widgetNoteCreated = useRef(false);
   
   const { notes, folders, settings, saveNotes, saveFolders, saveSettings, loadData } = useNotesData();
 
-  // Функция создания новой заметки (общая для всех способов)
+  // Функция создания новой заметки
   const createNewNote = React.useCallback(() => {
     if (isSaving) return;
     
@@ -46,11 +44,28 @@ const AppContent = () => {
       pinned: false,
       locked: false,
       isNew: true,
-      calendarEventId: null
+      hasReminder: false
     };
     setSelectedNote(newNote);
     setCurrentScreen('edit');
   }, [isSaving, currentFolder, settings]);
+
+  // Установка напоминания
+  const handleSetReminder = (noteId) => {
+    const updatedNotes = notes.map(n => 
+      n.id === noteId ? { ...n, hasReminder: true, updatedAt: Date.now() } : n
+    );
+    saveNotes(updatedNotes);
+  };
+  
+  // Отмена напоминания
+  const handleCancelReminder = (noteId) => {
+    const updatedNotes = notes.map(n => 
+      n.id === noteId ? { ...n, hasReminder: false, updatedAt: Date.now() } : n
+    );
+    saveNotes(updatedNotes);
+    Alert.alert('✅ Напоминание отменено', 'Напоминание для этой заметки отменено');
+  };
 
   // Обработка открытия заметки из виджета
   useEffect(() => {
@@ -66,9 +81,7 @@ const AppContent = () => {
           setCurrentScreen('edit');
         }
       } else if (url && url.includes('famnotes://create')) {
-        // Отмечаем, что запуск через виджет
         isWidgetLaunch.current = true;
-        // Создаем заметку через общую функцию
         createNewNote();
       }
     };
@@ -85,9 +98,7 @@ const AppContent = () => {
             setCurrentScreen('edit');
           }
         } else if (initialUrl.includes('famnotes://create')) {
-          // Отмечаем, что запуск через виджет
           isWidgetLaunch.current = true;
-          // Создаем заметку через общую функцию
           createNewNote();
         }
       }
@@ -102,26 +113,15 @@ const AppContent = () => {
     };
   }, [notes, createNewNote]);
 
-  // Сброс флага виджета после выхода из режима редактирования
+  // Сброс флага виджета
   useEffect(() => {
-    if (currentScreen !== 'edit') {
-      // Если вышли из режима редактирования и заметка была создана через виджет
-      if (widgetNoteCreated.current) {
-        widgetNoteCreated.current = false;
-      }
-      // Сбрасываем флаг запуска через виджет после завершения действия
-      if (isWidgetLaunch.current && currentScreen === 'notes') {
+    if (currentScreen === 'notes') {
+      const timer = setTimeout(() => {
         isWidgetLaunch.current = false;
-      }
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [currentScreen]);
-
-  // Отслеживаем создание заметки через виджет
-  useEffect(() => {
-    if (selectedNote && selectedNote.isNew && isWidgetLaunch.current) {
-      widgetNoteCreated.current = true;
-    }
-  }, [selectedNote]);
 
   // Обработка кнопки "Назад" на Android
   useEffect(() => {
@@ -195,9 +195,7 @@ const AppContent = () => {
   const isInTrash = currentFolder === 'Корзина';
   
   const handleAddNote = () => {
-    // При создании заметки через кнопку "+" сбрасываем флаг виджета
     isWidgetLaunch.current = false;
-    widgetNoteCreated.current = false;
     createNewNote();
   };
   
@@ -259,14 +257,6 @@ const AppContent = () => {
     saveNotes(updatedNotes);
   };
   
-  const handleCancelReminder = (noteId) => {
-    const updatedNotes = notes.map(n => 
-      n.id === noteId ? { ...n, calendarEventId: null, updatedAt: Date.now() } : n
-    );
-    saveNotes(updatedNotes);
-    Alert.alert('✅ Напоминание отменено', 'Напоминание для этой заметки отменено');
-  };
-  
   const handleQuickDelete = (note) => {
     if (note.folder === 'Корзина') {
       const updatedNotes = notes.filter(n => n.id !== note.id);
@@ -278,7 +268,6 @@ const AppContent = () => {
       saveNotes(newNotes);
     }
     
-    // После удаления всегда возвращаемся на экран списка
     setCurrentScreen('notes');
     setSelectedNote(null);
   };
@@ -357,6 +346,7 @@ const AppContent = () => {
     if (!selectedNoteForAction) return null;
     
     const isInTrashFolder = selectedNoteForAction.folder === 'Корзина' || selectedNoteForAction.deleted === true;
+    const hasReminder = selectedNoteForAction.hasReminder === true;
     
     return (
       <NoteActionDialog 
@@ -395,157 +385,13 @@ const AppContent = () => {
         isInTrash={isInTrashFolder}
         currentNote={selectedNoteForAction}
         settings={settings}
+        onSetReminder={handleSetReminder}
         onCancelReminder={handleCancelReminder}
+        hasReminder={hasReminder}
       />
     );
   };
   
   const NotesListScreen = () => (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
-      <StatusBar backgroundColor={brandColor} barStyle="light-content" />
-      <Header 
-        title={currentFolder} 
-        rightIcon="settings" 
-        onRightPress={() => setCurrentScreen('settings')} 
-        showSearch={true}
-        onSearchPress={() => {
-          setNavigationStack(prev => [...prev, 'notes']);
-          setCurrentScreen('search');
-        }}
-        showFolders={true}
-        onFoldersPress={() => setCurrentScreen('folders')}
-        brandColor={brandColor}
-      >
-        {isInTrash && sortedNotes.length > 0 && (
-          <TouchableOpacity onPress={handleEmptyTrash}>
-            <Icon name="delete-sweep" size={24} color="white" />
-          </TouchableOpacity>
-        )}
-      </Header>
-      
-      <FlatList 
-        data={sortedNotes} 
-        keyExtractor={item => item.id} 
-        renderItem={({ item }) => (
-          <NoteItem 
-            item={item} 
-            onPress={() => handleNoteOpen(item)} 
-            onLongPress={() => handleLongPressOnNote(item)}
-            settings={settings} 
-            showPin={!isInTrash}
-          />
-        )} 
-        ListEmptyComponent={
-          <View style={{ padding: 32, alignItems: 'center' }}>
-            <Text style={{ color: '#999' }}>Нет заметок</Text>
-          </View>
-        } 
-        contentContainerStyle={{ paddingBottom: 100 }}
-      />
-      
-      {!isInTrash && (
-        <TouchableOpacity 
-          style={{ 
-            position: 'absolute', 
-            bottom: insets.bottom + 24, 
-            right: insets.right + 24, 
-            width: 70, 
-            height: 70, 
-            borderRadius: 35, 
-            backgroundColor: brandColor, 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            elevation: 5 
-          }} 
-          onPress={handleAddNote}>
-          <Icon name="add" size={36} color="white" />
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-  
-  const isSelectedNoteNew = selectedNote && selectedNote.isNew === true;
-  
-  switch (currentScreen) {
-    case 'notes':
-      return (
-        <>
-          <NotesListScreen />
-          <ActionDialog />
-        </>
-      );
-    case 'settings':
-      return (
-        <SettingsScreen 
-          setCurrentScreen={setCurrentScreen}
-          settings={settings}
-          saveSettings={saveSettings}
-          notes={notes}
-          folders={folders}
-          onBrandColorChange={() => {}}
-          loadData={loadData}
-          setCurrentFolder={setCurrentFolder}
-        />
-      );
-    case 'folders':
-      return (
-        <FoldersScreen 
-          folders={folders}
-          currentFolder={currentFolder}
-          setCurrentFolder={setCurrentFolder}
-          setCurrentScreen={setCurrentScreen}
-          insets={insets}
-          saveFolders={saveFolders}
-          settings={settings}
-          notes={notes}
-          handleRenameFolder={handleRenameFolder}
-          handleDeleteFolder={handleDeleteFolder}
-          handleColorChange={handleColorChange}
-        />
-      );
-    case 'edit':
-      return (
-        <EditNoteScreen 
-          selectedNote={selectedNote}
-          currentFolder={currentFolder}
-          notes={notes}
-          settings={settings}
-          onSave={handleSaveNote}
-          setCurrentScreen={setCurrentScreen}
-          insets={insets}
-          onQuickDelete={handleQuickDelete}
-          isNewNote={isSelectedNoteNew}
-        />
-      );
-    case 'search':
-      return (
-        <SearchScreen 
-          notes={notes}
-          setCurrentScreen={setCurrentScreen}
-          setSelectedNote={setSelectedNote}
-          setSelectedNoteForAction={setSelectedNoteForAction}
-          setShowNoteDialog={setShowNoteDialog}
-          goBack={() => {
-            setCurrentScreen('notes');
-            setSearchQuery('');
-          }}
-          navigationStack={navigationStack}
-          setNavigationStack={setNavigationStack}
-          setSearchQuery={setSearchQuery}
-          searchQuery={searchQuery}
-          settings={settings}
-          onLongPressNote={handleLongPressOnNote}
-          onNoteOpen={handleNoteOpen}
-        />
-      );
-    default:
-      return (
-        <>
-          <NotesListScreen />
-          <ActionDialog />
-        </>
-      );
-  }
-};
-
-export default AppContent;
+      <Status
