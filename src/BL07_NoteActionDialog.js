@@ -16,7 +16,9 @@ const NoteActionDialog = ({
   settings,
   isInTrash,
   currentNote,
-  onCancelReminder
+  onSetReminder,
+  onCancelReminder,
+  hasReminder
 }) => {
   const availableFolders = React.useMemo(() => {
     return folders
@@ -35,9 +37,6 @@ const NoteActionDialog = ({
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedHour, setSelectedHour] = useState(0);
   const [selectedMinute, setSelectedMinute] = useState(0);
-  
-  // Проверяем, есть ли активное напоминание
-  const hasActiveReminder = currentNote?.calendarEventId && currentNote?.calendarEventId !== null;
   
   // Получение часового пояса устройства
   const getTimezone = () => {
@@ -101,25 +100,31 @@ const NoteActionDialog = ({
     return `${year}${month}${day}T${hours}${minutes}${seconds}`;
   };
   
-  // Формирование текста для уведомления
-  const getNotificationText = () => {
-    if (!currentNote) return { title: 'Напоминание', description: '' };
+  // Формирование текста для напоминания
+  const getReminderText = () => {
+    if (!currentNote) return { title: '', description: '' };
     
     const title = currentNote.title || '';
     const content = currentNote.content || '';
     
-    let description = '';
+    // Объединяем заголовок и текст
+    let fullText = '';
     if (title && content) {
-      description = `${title}\n\n${content}`;
+      fullText = `${title}\n\n${content}`;
     } else if (title) {
-      description = title;
+      fullText = title;
     } else if (content) {
-      description = content;
+      fullText = content;
     }
     
+    // Первые 100 символов в заголовок
+    const titleForReminder = fullText.substring(0, 100);
+    // Остальное в описание
+    const descriptionForReminder = fullText.length > 100 ? fullText.substring(100) : '';
+    
     return {
-      title: 'Напоминание',
-      description: description
+      title: titleForReminder || 'Напоминание',
+      description: descriptionForReminder
     };
   };
   
@@ -131,7 +136,7 @@ const NoteActionDialog = ({
   const addToGoogleCalendar = async () => {
     if (!currentNote) return;
     
-    const { title: notificationTitle, description: notificationDesc } = getNotificationText();
+    const { title: reminderTitle, description: reminderDesc } = getReminderText();
     
     const now = new Date();
     let year = now.getFullYear();
@@ -148,8 +153,8 @@ const NoteActionDialog = ({
     // Конец события - через 24 часа (сутки)
     const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
     
-    const encodedTitle = encodeURIComponent(notificationTitle);
-    const encodedDesc = encodeURIComponent(notificationDesc);
+    const encodedTitle = encodeURIComponent(reminderTitle);
+    const encodedDesc = encodeURIComponent(reminderDesc);
     const startStr = formatForGoogle(startDate);
     const endStr = formatForGoogle(endDate);
     const timezone = getTimezone();
@@ -158,6 +163,10 @@ const NoteActionDialog = ({
     
     try {
       await Linking.openURL(url);
+      // После открытия календаря вызываем onSetReminder для сохранения состояния
+      if (onSetReminder) {
+        onSetReminder(currentNote.id);
+      }
       setShowDateTimePicker(false);
       onClose();
     } catch (error) {
@@ -251,7 +260,7 @@ const NoteActionDialog = ({
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
-                  onPress={hasActiveReminder ? handleCancelReminder : openDateTimePicker} 
+                  onPress={hasReminder ? handleCancelReminder : openDateTimePicker} 
                   style={{ 
                     flex: 1,
                     padding: 12, 
@@ -261,9 +270,9 @@ const NoteActionDialog = ({
                     backgroundColor: brandColor,
                     borderRadius: 8,
                   }}>
-                  <Icon name={hasActiveReminder ? "cancel" : "alarm"} size={20} color="white" />
+                  <Icon name={hasReminder ? "cancel" : "alarm"} size={20} color="white" />
                   <Text style={{ fontSize: 14, color: 'white', marginLeft: 6 }}>
-                    {hasActiveReminder ? "Отменить" : "Напомнить"}
+                    {hasReminder ? "Отменить" : "Напомнить"}
                   </Text>
                 </TouchableOpacity>
               </View>
