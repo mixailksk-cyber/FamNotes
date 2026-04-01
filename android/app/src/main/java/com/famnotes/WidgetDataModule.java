@@ -3,7 +3,9 @@ package com.famnotes;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.widget.RemoteViews;
 
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -45,19 +47,18 @@ public class WidgetDataModule extends ReactContextBaseJavaModule {
                     RemoteViews views = new RemoteViews(reactContext.getPackageName(), R.layout.widget_layout);
                     
                     // Настройка адаптера для ListView
-                    android.content.Intent intent = new android.content.Intent(reactContext, FamNotesWidgetService.class);
+                    Intent intent = new Intent(reactContext, FamNotesWidgetService.class);
                     intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-                    intent.setData(android.net.Uri.parse(intent.toUri(android.content.Intent.URI_INTENT_SCHEME)));
+                    intent.setData(Uri.parse(intent.toUri(Intent.URI_INTENT_SCHEME)));
                     
                     views.setRemoteAdapter(R.id.widget_list, intent);
                     views.setEmptyView(R.id.widget_list, android.R.id.empty);
                     
                     // Настройка открытия приложения при нажатии на пустую область виджета
-                    android.content.Intent openAppIntent = new android.content.Intent(reactContext, MainActivity.class);
-                    openAppIntent.setAction(android.content.Intent.ACTION_MAIN);
-                    openAppIntent.addCategory(android.content.Intent.CATEGORY_LAUNCHER);
-                    openAppIntent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    openAppIntent.setData(android.net.Uri.parse("famnotes://widget"));
+                    Intent openAppIntent = new Intent(reactContext, MainActivity.class);
+                    openAppIntent.setAction(Intent.ACTION_MAIN);
+                    openAppIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+                    openAppIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     
                     android.app.PendingIntent pendingIntent = android.app.PendingIntent.getActivity(
                         reactContext, 
@@ -65,7 +66,8 @@ public class WidgetDataModule extends ReactContextBaseJavaModule {
                         openAppIntent, 
                         android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE
                     );
-                    views.setOnClickPendingIntent(R.id.widget_container, pendingIntent);
+                    // Используем существующий ID из layout
+                    views.setOnClickPendingIntent(R.id.widget_open_app_button, pendingIntent);
                     
                     appWidgetManager.updateAppWidget(appWidgetId, views);
                 }
