@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, FlatList, Text, TouchableOpacity, Alert, BackHandler, Platform, Linking, StatusBar, ActivityIndicator } from 'react-native';
+import { View, FlatList, Text, TouchableOpacity, Alert, BackHandler, Platform, Linking, StatusBar, ActivityIndicator, NativeModules, NativeEventEmitter } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getBrandColor } from './BL02_Constants';
@@ -23,35 +23,13 @@ const AppContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [pendingDeepLink, setPendingDeepLink] = useState(null);
   
-  // Флаг для отслеживания, было ли приложение запущено через виджет
-  const isWidgetLaunch = useRef(false);
   // Флаг для предотвращения повторного создания заметки
   const isCreatingNote = useRef(false);
   
   const { notes, folders, settings, saveNotes, saveFolders, saveSettings, loadData } = useNotesData();
 
-  // Ждем загрузки данных
-  useEffect(() => {
-    const checkDataLoaded = async () => {
-      // Ждем, пока settings загрузятся
-      if (settings && Object.keys(settings).length > 0) {
-        setIsDataLoaded(true);
-      } else {
-        // Если данных нет, пробуем загрузить еще раз
-        await loadData();
-        // Даем время на загрузку
-        setTimeout(() => {
-          setIsDataLoaded(true);
-        }, 500);
-      }
-    };
-    
-    checkDataLoaded();
-  }, [settings, loadData]);
-
-  // Функция создания новой заметки (общая для всех способов)
+  // Функция создания новой заметки
   const createNewNote = React.useCallback(() => {
     if (isSaving || isCreatingNote.current) return;
     isCreatingNote.current = true;
@@ -76,8 +54,77 @@ const AppContent = () => {
     
     setTimeout(() => {
       isCreatingNote.current = false;
-    }, 500);
+    }, 1000);
   }, [isSaving, currentFolder, settings]);
+
+  // Обработка события из виджета (создание заметки)
+  useEffect(() => {
+    const eventEmitter = new NativeEventEmitter(NativeModules.DeviceEventManagerModule);
+    const subscription = eventEmitter.addListener('createNewNote', () => {
+      console.log('Received createNewNote event from widget');
+      // Ждем загрузки данных, если нужно
+      if (isDataLoaded) {
+        createNewNote();
+      } else {
+        // Если данные еще не загружены, ждем
+        const checkData = setInterval(() => {
+          if (isDataLoaded) {
+            clearInterval(checkData);
+            createNewNote();
+          }
+        }, 100);
+      }
+    });
+    
+    return () => {
+      subscription.remove();
+    };
+  }, [isDataLoaded, createNewNote]);
+
+  // Обработка deep link для совместимости
+  useEffect(() => {
+    const handleDeepLink = (event) => {
+      const url = event.url;
+      console.log('Deep link received:', url);
+      if (url && url.includes('famnotes://note/')) {
+        const noteId = url.split('famnotes://note/')[1];
+        const note = notes.find(n => n.id === noteId);
+        if (note) {
+          setSelectedNote(note);
+          setCurrentScreen('edit');
+        }
+      }
+    };
+    
+    const getInitialUrl = async () => {
+      const initialUrl = await Linking.getInitialURL();
+      if (initialUrl && initialUrl.includes('famnotes://note/')) {
+        const noteId = initialUrl.split('famnotes://note/')[1];
+        const note = notes.find(n => n.id === noteId);
+        if (note) {
+          setSelectedNote(note);
+          setCurrentScreen('edit');
+        }
+      }
+    };
+    
+    getInitialUrl();
+    
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    
+    return () => {
+      subscription.remove();
+    };
+  }, [notes]);
+
+  // Загрузка данных
+  useEffect(() => {
+    const loadDataAsync = async () => {
+      await loadData();
+      setIsDataLoaded(true);
+    };
+    loadDataAsync();
+  }, [loadData]);
 
   // Установка напоминания
   const handleSetReminder = (noteId) => {
@@ -95,67 +142,6 @@ const AppContent = () => {
     saveNotes(updatedNotes);
     Alert.alert('✅ Напоминание отменено', 'Напоминание для этой заметки отменено');
   };
-
-  // Обработка deep link (с учетом загрузки данных)
-  const processDeepLink = React.useCallback((url) => {
-    console.log('Processing deep link:', url);
-    
-    if (url && url.includes('famnotes://note/')) {
-      const noteId = url.split('famnotes://note/')[1];
-      const note = notes.find(n => n.id === noteId);
-      if (note) {
-        setSelectedNote(note);
-        setCurrentScreen('edit');
-      }
-    } else if (url && url.includes('famnotes://create')) {
-      isWidgetLaunch.current = true;
-      // Ждем загрузки данных перед созданием заметки
-      if (isDataLoaded) {
-        createNewNote();
-      } else {
-        setPendingDeepLink('create');
-      }
-    }
-  }, [notes, isDataLoaded, createNewNote]);
-
-  // Обработка отложенного deep link после загрузки данных
-  useEffect(() => {
-    if (isDataLoaded && pendingDeepLink === 'create') {
-      setPendingDeepLink(null);
-      createNewNote();
-    }
-  }, [isDataLoaded, pendingDeepLink, createNewNote]);
-
-  // Обработка открытия заметки из виджета
-  useEffect(() => {
-    const handleDeepLink = (event) => {
-      processDeepLink(event.url);
-    };
-    
-    const getInitialUrl = async () => {
-      const initialUrl = await Linking.getInitialURL();
-      if (initialUrl) {
-        console.log('Initial URL:', initialUrl);
-        processDeepLink(initialUrl);
-      }
-    };
-    
-    getInitialUrl();
-    
-    const subscription = Linking.addEventListener('url', handleDeepLink);
-    
-    return () => {
-      subscription.remove();
-    };
-  }, [processDeepLink]);
-
-  // Сброс флага виджета при выходе на главный экран
-  useEffect(() => {
-    if (currentScreen === 'notes') {
-      // Сбрасываем флаг сразу
-      isWidgetLaunch.current = false;
-    }
-  }, [currentScreen]);
 
   // Обработка кнопки "Назад" на Android
   useEffect(() => {
@@ -229,7 +215,6 @@ const AppContent = () => {
   const isInTrash = currentFolder === 'Корзина';
   
   const handleAddNote = () => {
-    isWidgetLaunch.current = false;
     createNewNote();
   };
   
@@ -260,9 +245,6 @@ const AppContent = () => {
       
       setSelectedNote(null);
       setCurrentScreen('notes');
-      
-      // Сбрасываем флаг виджета сразу после сохранения
-      isWidgetLaunch.current = false;
     } finally {
       setTimeout(() => {
         setIsSaving(false);
@@ -307,8 +289,6 @@ const AppContent = () => {
     
     setCurrentScreen('notes');
     setSelectedNote(null);
-    // Сбрасываем флаг виджета
-    isWidgetLaunch.current = false;
   };
   
   const handleEmptyTrash = () => {
